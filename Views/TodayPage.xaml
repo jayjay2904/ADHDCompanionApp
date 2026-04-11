@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ADHDCompanionApp.Views.TodayPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Today">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="12">
+
+            <Label
+                Text="Today"
+                FontSize="28"
+                FontAttributes="Bold" />
+
+            <Label
+                Text="One step at a time."
+                FontSize="16"
+                Opacity="0.8" />
+
+            <Label
+                Text="Truth Bomb"
+                Style="{StaticResource SectionTitleStyle}" />
+
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <Label
+                    Text="{Binding TruthBombText}"
+                    FontSize="16" />
+            </Frame>
+
+            <Label
+                Text="How are you feeling?"
+                Style="{StaticResource SectionTitleStyle}" />
+
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <VerticalStackLayout Spacing="12">
+
+                    <Entry
+                        Placeholder="Mood (for example: good, low, anxious)"
+                        Text="{Binding Mood}" />
+
+                    <Label Text="Energy" />
+                    <Slider
+                        Minimum="1"
+                        Maximum="5"
+                        Value="{Binding EnergyLevel}" />
+                    <Label Text="{Binding EnergyLevel}" />
+
+                    <Label Text="Focus" />
+                    <Slider
+                        Minimum="1"
+                        Maximum="5"
+                        Value="{Binding FocusLevel}" />
+                    <Label Text="{Binding FocusLevel}" />
+
+                    <Editor
+                        Placeholder="Optional note"
+                        AutoSize="TextChanges"
+                        Text="{Binding Note}" />
+
+                    <Button
+                        Text="Save check-in"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding SaveCheckInCommand}" />
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <Label
+                Text="Next Step"
+                Style="{StaticResource SectionTitleStyle}" />
+
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <Label Text="{Binding NextStepSuggestion}" />
+            </Frame>
+
+            <Label
+                Text="Tasks"
+                Style="{StaticResource SectionTitleStyle}" />
+
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <VerticalStackLayout Spacing="12">
+
+                    <Entry
+                        Placeholder="Add a task"
+                        Text="{Binding NewTaskTitle}" />
+
+                    <Button
+                        Text="Add task"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding AddTaskCommand}" />
+
+                    <CollectionView ItemsSource="{Binding Tasks}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame Padding="12" Margin="0,6,0,0">
+                                    <HorizontalStackLayout Spacing="12">
+
+                                        <Label
+                        Text="{Binding Title}"
+                        VerticalOptions="Center"
+                        HorizontalOptions="StartAndExpand">
+
+                                            <Label.Triggers>
+                                                <DataTrigger
+                                TargetType="Label"
+                                Binding="{Binding IsCompleted}"
+                                Value="True">
+                                                    <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                    <Setter Property="Opacity" Value="0.6" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+
+                                        </Label>
+
+                                        <Button
+                        Text="Done"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Clicked="OnDoneTaskClicked">
+
+                                            <Button.Triggers>
+                                                <DataTrigger
+                                TargetType="Button"
+                                Binding="{Binding IsCompleted}"
+                                Value="True">
+                                                    <Setter Property="IsVisible" Value="False" />
+                                                </DataTrigger>
+                                            </Button.Triggers>
+
+                                        </Button>
+
+                                    </HorizontalStackLayout>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <Label
+                Text="Today's Win"
+                Style="{StaticResource SectionTitleStyle}" />
+
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <VerticalStackLayout Spacing="12">
+
+                    <Editor
+                        Placeholder="What’s one win from today?"
+                        AutoSize="TextChanges"
+                        Text="{Binding NewWinText}" />
+
+                    <Button
+                        Text="Save win"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding AddWinCommand}" />
+
+                    <Label
+                        Text="Recent Wins"
+                        FontAttributes="Bold"
+                        Margin="0,8,0,0" />
+
+                    <CollectionView ItemsSource="{Binding RecentWins}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame Padding="12" Margin="0,6,0,0">
+                                    <VerticalStackLayout Spacing="4">
+                                        <Label Text="{Binding Text}" />
+                                        <Label
+                                            Text="{Binding TimestampUtc, StringFormat='Saved: {0:dd MMM yyyy HH:mm}'}"
+                                            FontSize="12"
+                                            Opacity="0.6" />
+                                    </VerticalStackLayout>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <Label
+                Text="{Binding StatusMessage}"
+                FontSize="14"
+                Opacity="0.7"
+                Margin="0,8,0,16" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

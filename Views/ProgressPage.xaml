@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ADHDCompanionApp.Views.ProgressPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Progress">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="12">
+
+            <Label
+                Text="Progress"
+                FontSize="28"
+                FontAttributes="Bold" />
+
+            <Label
+                Text="A gentle look at how things are going."
+                FontSize="16"
+                Opacity="0.8" />
+
+            <Label
+                Text="Your Progress"
+                Style="{StaticResource SectionTitleStyle}" />
+
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <VerticalStackLayout Spacing="12">
+
+                    <Frame Style="{StaticResource CardFrameStyle}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Check-ins logged" FontAttributes="Bold" />
+                            <Label Text="{Binding TotalCheckIns}" FontSize="20" />
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame Style="{StaticResource CardFrameStyle}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Tasks created" FontAttributes="Bold" />
+                            <Label Text="{Binding TotalTasks}" FontSize="20" />
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame Style="{StaticResource CardFrameStyle}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Tasks completed" FontAttributes="Bold" />
+                            <Label Text="{Binding CompletedTasks}" FontSize="20" />
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame Style="{StaticResource CardFrameStyle}">
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="Wins captured" FontAttributes="Bold" />
+                            <Label Text="{Binding TotalWins}" FontSize="20" />
+                        </VerticalStackLayout>
+                    </Frame>
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <Label
+                Text="Recent Wins"
+                Style="{StaticResource SectionTitleStyle}" />
+
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <CollectionView ItemsSource="{Binding RecentWins}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame Padding="12" Margin="0,6,0,0">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label Text="{Binding Text}" />
+                                    <Label
+                                        Text="{Binding TimestampUtc, StringFormat='Saved: {0:dd MMM yyyy HH:mm}'}"
+                                        FontSize="12"
+                                        Opacity="0.6" />
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Frame>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

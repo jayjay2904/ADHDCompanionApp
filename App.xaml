@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Application
+    x:Class="ADHDCompanionApp.App"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <Application.Resources>
+        <ResourceDictionary>
+
+            <!-- Core Colours -->
+            <Color x:Key="Primary">#6D5BD0</Color>
+            <Color x:Key="Secondary">#F5F5F5</Color>
+            <Color x:Key="TextPrimary">#1E1E1E</Color>
+
+            <!-- Brushes (must come AFTER colours) -->
+            <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
+
+            <!-- Card Style -->
+            <Style TargetType="Frame" x:Key="CardFrameStyle">
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="Margin" Value="0,8,0,0" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="HasShadow" Value="True" />
+            </Style>
+
+            <!-- Section Title -->
+            <Style TargetType="Label" x:Key="SectionTitleStyle">
+                <Setter Property="FontSize" Value="18" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="Margin" Value="0,16,0,6" />
+            </Style>
+
+            <!-- Primary Button -->
+            <Style TargetType="Button" x:Key="PrimaryButtonStyle">
+                <Setter Property="Margin" Value="0,10,0,0" />
+                <Setter Property="Padding" Value="14,10" />
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                <Setter Property="TextColor" Value="White" />
+            </Style>
+
+            <!-- Arlo message (outline only) -->
+            <Style TargetType="Frame" x:Key="ArloBubbleStyle">
+                <Setter Property="Padding" Value="14" />
+                <Setter Property="Margin" Value="0,6,40,0" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="HasShadow" Value="False" />
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                <Setter Property="HorizontalOptions" Value="Start" />
+            </Style>
+
+            <!-- User message (filled) -->
+            <Style TargetType="Frame" x:Key="UserBubbleStyle">
+                <Setter Property="Padding" Value="14" />
+                <Setter Property="Margin" Value="40,6,0,0" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="HasShadow" Value="False" />
+                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                <Setter Property="HorizontalOptions" Value="End" />
+            </Style>
+
+            <Style TargetType="Button" x:Key="SecondaryButtonStyle">
+                <Setter Property="Margin" Value="0,6,6,0" />
+                <Setter Property="Padding" Value="12,8" />
+                <Setter Property="CornerRadius" Value="18" />
+            </Style>
+
+        </ResourceDictionary>
+    </Application.Resources>
+
+</Application>

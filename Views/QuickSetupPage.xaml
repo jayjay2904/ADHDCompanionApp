@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ADHDCompanionApp.Views.QuickSetupPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30" Spacing="20">
+
+            <Label Text="Quick Setup" FontSize="24" />
+
+            <Entry Placeholder="Your name" Text="{Binding Nickname}" />
+
+            <Label Text="Do you want medication reminders?" />
+            <Switch IsToggled="{Binding UsesMedicationSupport}" />
+
+            <Label Text="Do you want task support?" />
+            <Switch IsToggled="{Binding UsesTaskSupport}" />
+
+            <Button Text="Continue" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
