@@ -3,24 +3,27 @@
     x:Class="ADHDCompanionApp.Views.TodayPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Today">
+    Title="Today"
+    BackgroundColor="#121212">
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="12">
 
             <Label
-                Text="Today"
+                Text="{Binding GreetingText}"
+                TextColor="White"
                 FontSize="28"
                 FontAttributes="Bold" />
-
+            
             <Label
-                Text="One step at a time."
+                Text="{Binding FlowMessage}"
                 FontSize="16"
-                Opacity="0.8" />
+                Opacity="0.8"
+                TextColor="White"/>
 
             <Label
                 Text="Truth Bomb"
-                Style="{StaticResource SectionTitleStyle}" />
+                Style="{StaticResource SectionTitleStyle}"/>
 
             <Frame Style="{StaticResource CardFrameStyle}">
                 <Label
@@ -62,6 +65,12 @@
                         Text="Save check-in"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Command="{Binding SaveCheckInCommand}" />
+                    <Label 
+                        Text="{Binding CheckInPrompt}" 
+                        FontSize="16"
+                        TextColor="LightBlue"
+                        HorizontalOptions="Center"
+                        Margin="0,10,0,10" />
 
                 </VerticalStackLayout>
             </Frame>
@@ -76,7 +85,8 @@
 
             <Label
                 Text="Tasks"
-                Style="{StaticResource SectionTitleStyle}" />
+                Style="{StaticResource SectionTitleStyle}"
+                BackgroundColor="#1E1E1E"/>
 
             <Frame Style="{StaticResource CardFrameStyle}">
                 <VerticalStackLayout Spacing="12">
@@ -90,22 +100,35 @@
                         Style="{StaticResource PrimaryButtonStyle}"
                         Command="{Binding AddTaskCommand}" />
 
+                    <Label 
+                        Text="{Binding StatusMessage}" 
+                        TextColor="LightGreen"
+                        FontSize="14"
+                        HorizontalOptions="Center"
+                        Margin="0,10,0,0"/>
+
                     <CollectionView ItemsSource="{Binding Tasks}">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
                                 <Frame Padding="12" Margin="0,6,0,0">
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToggleTaskCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Frame.GestureRecognizers>
+
                                     <HorizontalStackLayout Spacing="12">
 
                                         <Label
-                        Text="{Binding Title}"
-                        VerticalOptions="Center"
-                        HorizontalOptions="StartAndExpand">
+                                            Text="{Binding Title}"
+                                            VerticalOptions="Center"
+                                            HorizontalOptions="StartAndExpand">
 
                                             <Label.Triggers>
                                                 <DataTrigger
-                                TargetType="Label"
-                                Binding="{Binding IsCompleted}"
-                                Value="True">
+                                                    TargetType="Label"
+                                                    Binding="{Binding IsCompleted}"
+                                                    Value="True">
                                                     <Setter Property="TextDecorations" Value="Strikethrough" />
                                                     <Setter Property="Opacity" Value="0.6" />
                                                 </DataTrigger>
@@ -113,21 +136,29 @@
 
                                         </Label>
 
-                                        <Button
-                        Text="Done"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        Clicked="OnDoneTaskClicked">
+                                        <Label
+                                            Text="Tap to complete"
+                                            FontSize="12"
+                                            VerticalOptions="Center"
+                                            Opacity="0.6">
 
-                                            <Button.Triggers>
+                                            <Label.Triggers>
                                                 <DataTrigger
-                                TargetType="Button"
-                                Binding="{Binding IsCompleted}"
-                                Value="True">
-                                                    <Setter Property="IsVisible" Value="False" />
+                                                    TargetType="Label"
+                                                    Binding="{Binding IsCompleted}"
+                                                    Value="True">
+                                                    <Setter Property="Text" Value="Completed" />
                                                 </DataTrigger>
-                                            </Button.Triggers>
 
-                                        </Button>
+                                                <DataTrigger
+                                                    TargetType="Label"
+                                                    Binding="{Binding IsCompleted}"
+                                                    Value="True">
+                                                    <Setter Property="Opacity" Value="0.6" />
+                                                </DataTrigger>
+                                            </Label.Triggers>
+
+                                        </Label>
 
                                     </HorizontalStackLayout>
                                 </Frame>

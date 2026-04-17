@@ -5,25 +5,42 @@ namespace ADHDCompanionApp.Services.Implementations;
 
 public class CheckInService : ICheckInService
 {
-    private readonly List<CheckInEntry> _checkIns = new();
+    private readonly DatabaseService _databaseService;
 
-    public Task SaveCheckInAsync(CheckInEntry entry)
+    public CheckInService(DatabaseService databaseService)
     {
-        _checkIns.Add(entry);
-        return Task.CompletedTask;
+        _databaseService = databaseService;
     }
 
-    public Task<CheckInEntry?> GetLatestCheckInAsync()
+    public async Task SaveCheckInAsync(CheckInEntry entry)
     {
-        var latest = _checkIns
+        if (entry is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(entry.Id))
+        {
+            entry.Id = Guid.NewGuid().ToString();
+        }
+
+        if (entry.TimestampUtc == default)
+        {
+            entry.TimestampUtc = DateTime.UtcNow;
+        }
+
+        await _databaseService.SaveCheckInAsync(entry);
+    }
+
+    public async Task<CheckInEntry?> GetLatestCheckInAsync()
+    {
+        var checkIns = await _databaseService.GetCheckInsAsync();
+
+        return checkIns
             .OrderByDescending(c => c.TimestampUtc)
             .FirstOrDefault();
-
-        return Task.FromResult(latest);
     }
 
-    public Task<List<CheckInEntry>> GetAllCheckInsAsync()
+    public async Task<List<CheckInEntry>> GetAllCheckInsAsync()
     {
-        return Task.FromResult(_checkIns.ToList());
+        return await _databaseService.GetCheckInsAsync();
     }
 }

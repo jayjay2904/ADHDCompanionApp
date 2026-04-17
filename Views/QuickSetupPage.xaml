@@ -2,24 +2,57 @@
 <ContentPage
     x:Class="ADHDCompanionApp.Views.QuickSetupPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="#121212">
 
     <ScrollView>
         <VerticalStackLayout Padding="30" Spacing="20">
 
-            <Label Text="Quick Setup" FontSize="24" />
+            <Label
+                Text="Quick Setup"
+                FontSize="24"
+                TextColor="White" />
 
-            <Entry Placeholder="Your name" Text="{Binding Nickname}" />
+            <Entry
+                Placeholder="Your name"
+                Text="{Binding Nickname}"
+                TextColor="White"
+                PlaceholderColor="#BBBBBB"
+                BackgroundColor="#1E1E1E" />
 
-            <Label Text="Do you want medication reminders?" />
-            <Switch IsToggled="{Binding UsesMedicationSupport}" />
+            <Label
+                Text="Do you want medication reminders?"
+                TextColor="White" />
 
-            <Label Text="Do you want task support?" />
-            <Switch IsToggled="{Binding UsesTaskSupport}" />
+            <Switch
+                IsToggled="{Binding UsesMedicationSupport}" />
 
-            <Button Text="Continue" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+            <VerticalStackLayout
+                IsVisible="{Binding UsesMedicationSupport}"
+                Spacing="8">
+
+                <Label
+                    Text="What time would you like your reminder?"
+                    TextColor="White" />
+
+                <TimePicker
+                    Time="{Binding ReminderTime}"
+                    TextColor="White"
+                    BackgroundColor="#1E1E1E" />
+            </VerticalStackLayout>
+
+            <Label
+                Text="Do you want task support?"
+                TextColor="White" />
+
+            <Switch
+                IsToggled="{Binding UsesTaskSupport}" />
+
+            <Button
+                Text="Continue"
+                Command="{Binding SaveCommand}"
+                Style="{StaticResource PrimaryButtonStyle}" />
 
         </VerticalStackLayout>
     </ScrollView>
-
 </ContentPage>

@@ -1,3 +1,4 @@
+using SQLite;
 namespace ADHDCompanionApp.Models.Entities;
 
 public class WinEntry

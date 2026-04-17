@@ -20,14 +20,8 @@ public partial class TodayPage : ContentPage
         await _viewModel.LoadTasksAsync();
         await _viewModel.LoadWinsAsync();
         await _viewModel.LoadTruthBombAsync();
+        await _viewModel.LoadDataAsync();
     }
 
-    private async void OnDoneTaskClicked(object sender, EventArgs e)
-    {
-        if (sender is Button button &&
-            button.BindingContext is TaskItem task)
-        {
-            await _viewModel.CompleteTaskCommand.ExecuteAsync(task);
-        }
-    }
+   
 }

@@ -2,7 +2,7 @@ namespace ADHDCompanionApp.Models.Entities;
 
 public class CheckInEntry
 {
-    public string Id { get; set; } = Guid.NewGuid().ToString();
+    public string Id { get; set; } = string.Empty;
 
     public DateTime TimestampUtc { get; set; } = DateTime.UtcNow;
 

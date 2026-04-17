@@ -21,6 +21,7 @@
                 <Setter Property="Margin" Value="0,8,0,0" />
                 <Setter Property="CornerRadius" Value="12" />
                 <Setter Property="HasShadow" Value="True" />
+                <Setter Property="BackgroundColor" Value="#1E1E1E" />
             </Style>
 
             <!-- Section Title -->

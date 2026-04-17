@@ -2,19 +2,24 @@
 <ContentPage
     x:Class="ADHDCompanionApp.Views.WelcomePage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="#121212">
 
     <VerticalStackLayout Padding="30" Spacing="25">
-        <Label 
+        <Label
+            TextColor="White"
             Text="ADHD Companion"
             FontSize="28"
             HorizontalOptions="Center" />
 
-        <Label 
+        <Label
+            x:Name="WelcomeMessageLabel"
+            TextColor="White"
             Text="Your calm place to land."
             HorizontalOptions="Center" />
 
-        <Button 
+        <Button
+            x:Name="GetStartedButton"
             Text="Get Started"
             Style="{StaticResource PrimaryButtonStyle}"
             Clicked="OnGetStartedClicked" />

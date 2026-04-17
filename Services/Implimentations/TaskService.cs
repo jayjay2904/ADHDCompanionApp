@@ -5,40 +5,69 @@ namespace ADHDCompanionApp.Services.Implementations;
 
 public class TaskService : ITaskService
 {
-    private readonly List<TaskItem> _tasks = new();
+    private readonly DatabaseService _databaseService;
 
-    public Task AddTaskAsync(TaskItem task)
+    public TaskService(DatabaseService databaseService)
     {
-        _tasks.Add(task);
-        return Task.CompletedTask;
+        _databaseService = databaseService;
     }
 
-    public Task<List<TaskItem>> GetAllTasksAsync()
+    public async Task AddTaskAsync(TaskItem task)
     {
-        return Task.FromResult(_tasks.ToList());
+        if (task is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(task.Id))
+        {
+            task.Id = Guid.NewGuid().ToString();
+        }
+
+        if (task.CreatedUtc == default)
+        {
+            task.CreatedUtc = DateTime.UtcNow;
+        }
+
+        await _databaseService.SaveTaskAsync(task);
     }
 
-    public Task CompleteTaskAsync(string taskId)
+    public async Task<List<TaskItem>> GetAllTasksAsync()
     {
-        var task = _tasks.FirstOrDefault(t => t.Id == taskId);
+        var tasks = await _databaseService.GetTasksAsync();
+
+        var cutoff = DateTime.UtcNow.AddHours(-24);
+
+        var oldCompletedTasks = tasks
+            .Where(t => t.IsCompleted && t.CompletedUtc.HasValue && t.CompletedUtc.Value < cutoff)
+            .ToList();
+
+        foreach (var task in oldCompletedTasks)
+        {
+            await _databaseService.DeleteTaskAsync(task);
+        }
+
+        tasks = await _databaseService.GetTasksAsync();
+
+        return tasks;
+    }
+
+    public async Task CompleteTaskAsync(string taskId)
+    {
+        var tasks = await _databaseService.GetTasksAsync();
+        var task = tasks.FirstOrDefault(t => t.Id == taskId);
 
         if (task is not null)
         {
             task.IsCompleted = true;
+            task.CompletedUtc = DateTime.UtcNow;
+            await _databaseService.SaveTaskAsync(task);
         }
-
-        return Task.CompletedTask;
     }
-    public Task UpdateTaskAsync(TaskItem task)
+
+    public async Task UpdateTaskAsync(TaskItem task)
     {
-        var existingTask = _tasks.FirstOrDefault(t => t.Id == task.Id);
+        if (task is null)
+            return;
 
-        if (existingTask is not null)
-        {
-            existingTask.Title = task.Title;
-            existingTask.IsCompleted = task.IsCompleted;
-        }
-
-        return Task.CompletedTask;
+        await _databaseService.SaveTaskAsync(task);
     }
 }

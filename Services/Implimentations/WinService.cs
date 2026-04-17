@@ -5,20 +5,37 @@ namespace ADHDCompanionApp.Services.Implementations;
 
 public class WinService : IWinService
 {
-    private readonly List<WinEntry> _wins = new();
+    private readonly DatabaseService _databaseService;
 
-    public Task AddWinAsync(WinEntry win)
+    public WinService(DatabaseService databaseService)
     {
-        _wins.Add(win);
-        return Task.CompletedTask;
+        _databaseService = databaseService;
     }
 
-    public Task<List<WinEntry>> GetRecentWinsAsync()
+    public async Task AddWinAsync(WinEntry win)
     {
-        var wins = _wins
+        if (win is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(win.Id))
+        {
+            win.Id = Guid.NewGuid().ToString();
+        }
+
+        if (win.TimestampUtc == default)
+        {
+            win.TimestampUtc = DateTime.UtcNow;
+        }
+
+        await _databaseService.SaveWinAsync(win);
+    }
+
+    public async Task<List<WinEntry>> GetRecentWinsAsync()
+    {
+        var wins = await _databaseService.GetWinsAsync();
+
+        return wins
             .OrderByDescending(w => w.TimestampUtc)
             .ToList();
-
-        return Task.FromResult(wins);
     }
 }

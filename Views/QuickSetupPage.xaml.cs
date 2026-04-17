@@ -4,9 +4,9 @@ namespace ADHDCompanionApp.Views;
 
 public partial class QuickSetupPage : ContentPage
 {
-    public QuickSetupPage(QuickSetupViewModel vm)
+    public QuickSetupPage(QuickSetupViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = vm;
+        BindingContext = viewModel;
     }
 }
