@@ -12,6 +12,7 @@
         <!-- HEADER + QUICK PROMPTS -->
         <VerticalStackLayout Grid.Row="0" Spacing="8">
 
+            
             <Label
                 Text="Hi I'm Arlo"
                 TextColor="White"
@@ -24,10 +25,7 @@
                 Opacity="0.8"
                 TextColor="White"/>
 
-            <Button
-                Text="Clear chat"
-                Style="{StaticResource SecondaryButtonStyle}"
-                Command="{Binding ClearChatCommand}" />
+            
 
             <CollectionView
                 ItemsSource="{Binding QuickPrompts}"
@@ -40,13 +38,14 @@
                     <DataTemplate>
                         <Button
                             Text="{Binding .}"
-                            Style="{StaticResource SecondaryButtonStyle}"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
                             CommandParameter="{Binding .}" />
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
 
             </CollectionView>
+           
 
         </VerticalStackLayout>
 
@@ -55,8 +54,10 @@
             Grid.Row="1"
             Style="{StaticResource CardFrameStyle}"
             Padding="12">
-
+           
             <Grid RowDefinitions="Auto,*" RowSpacing="8">
+
+                    
 
                 <Label
                     Grid.Row="0"
@@ -65,6 +66,7 @@
                     FontAttributes="Bold"
                     TextColor="White"/>
 
+                       
                 <ScrollView
                     x:Name="MessagesScrollView"
                     Grid.Row="1">
@@ -115,7 +117,7 @@
                                                 <Label
                                                     Text="{Binding Text}"
                                                     FontSize="16"
-                                                    TextColor="White"
+                                                    TextColor="Black"
                                                     LineBreakMode="WordWrap"
                                                     />
                                             </Frame>
@@ -153,9 +155,14 @@
                     Style="{StaticResource PrimaryButtonStyle}"
                     Command="{Binding SendMessageCommand}" />
 
+                <Button
+                    Text="Clear chat"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Command="{Binding ClearChatCommand}" />
+
             </VerticalStackLayout>
 
         </Frame>
-
+        
     </Grid>
 </ContentPage>

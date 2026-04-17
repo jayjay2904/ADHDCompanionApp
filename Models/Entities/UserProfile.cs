@@ -7,6 +7,7 @@ public class UserProfile
     public string PreferredTone { get; set; } = string.Empty;
     public string ReminderStyle { get; set; } = string.Empty;
     public bool UsesMedicationSupport { get; set; }
+    public DateTime? MedicationStartDate { get; set; }
     public TimeSpan? MedicationReminderTime { get; set; }
     public bool UsesTaskSupport { get; set; }
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;

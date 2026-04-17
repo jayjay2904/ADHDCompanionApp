@@ -1,20 +1,31 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
-    x:Class="ADHDCompanionApp.Views.QuickSetupPage"
+    x:Class="ADHDCompanionApp.Views.PreferencesPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="Preferences"
     BackgroundColor="#121212">
 
     <ScrollView>
         <VerticalStackLayout Padding="30" Spacing="20">
 
             <Label
-                Text="Quick Setup"
-                FontSize="24"
+                Text="Preferences"
+                FontSize="28"
+                FontAttributes="Bold"
+                TextColor="White" />
+
+            <Label
+                Text="Update your name, reminders, and support settings."
+                FontSize="14"
+                TextColor="#CCCCCC" />
+
+            <Label
+                Text="What should I call you?"
                 TextColor="White" />
 
             <Entry
-                Placeholder="Your name"
+                Placeholder="Your name or nickname"
                 Text="{Binding Nickname}"
                 TextColor="White"
                 PlaceholderColor="#BBBBBB"
@@ -48,7 +59,6 @@
                     Date="{Binding MedicationStartDate}"
                     TextColor="White"
                     BackgroundColor="#1E1E1E" />
-
             </VerticalStackLayout>
 
             <Label
@@ -58,8 +68,13 @@
             <Switch
                 IsToggled="{Binding UsesTaskSupport}" />
 
+            <Label
+                Text="{Binding StatusMessage}"
+                TextColor="Coral"
+                FontSize="14" />
+
             <Button
-                Text="Continue"
+                Text="Save Preferences"
                 Command="{Binding SaveCommand}"
                 Style="{StaticResource PrimaryButtonStyle}" />
 

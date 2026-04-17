@@ -1,11 +1,11 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.Services.Interfaces;
 
 namespace ADHDCompanionApp.ViewModels;
 
-public partial class QuickSetupViewModel : BaseViewModel
+public partial class PreferencesViewModel : BaseViewModel
 {
     private readonly IUserProfileService _profileService;
     private readonly INotificationService _notificationService;
@@ -25,16 +25,21 @@ public partial class QuickSetupViewModel : BaseViewModel
     [ObservableProperty]
     private DateTime medicationStartDate = DateTime.Today;
 
-    public QuickSetupViewModel(
-    IUserProfileService profileService,
-    INotificationService notificationService)
+    [ObservableProperty]
+    private string statusMessage = string.Empty;
+
+    public PreferencesViewModel(
+        IUserProfileService profileService,
+        INotificationService notificationService)
     {
         _profileService = profileService;
         _notificationService = notificationService;
-        LoadExistingProfile();
+
+        Title = "Preferences";
+        LoadPreferences();
     }
 
-    private async void LoadExistingProfile()
+    private async void LoadPreferences()
     {
         var profile = await _profileService.GetProfileAsync();
 
@@ -45,6 +50,7 @@ public partial class QuickSetupViewModel : BaseViewModel
         UsesMedicationSupport = profile.UsesMedicationSupport;
         UsesTaskSupport = profile.UsesTaskSupport;
         ReminderTime = profile.MedicationReminderTime ?? new TimeSpan(9, 0, 0);
+        MedicationStartDate = profile.MedicationStartDate ?? DateTime.Today;
     }
 
     [RelayCommand]
@@ -52,17 +58,26 @@ public partial class QuickSetupViewModel : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(Nickname))
         {
-            await Shell.Current.DisplayAlert("Just one thing", "Please tell me what to call you.", "OK");
+            await Shell.Current.DisplayAlert(
+                "Just one thing",
+                "Please tell me what to call you.",
+                "OK");
             return;
         }
 
+        var existingProfile = await _profileService.GetProfileAsync();
+
         var profile = new UserProfile
         {
+            Id = existingProfile?.Id ?? Guid.NewGuid().ToString(),
             Nickname = Nickname.Trim(),
+            PreferredTone = existingProfile?.PreferredTone ?? string.Empty,
+            ReminderStyle = existingProfile?.ReminderStyle ?? string.Empty,
             UsesMedicationSupport = UsesMedicationSupport,
             UsesTaskSupport = UsesTaskSupport,
             MedicationReminderTime = UsesMedicationSupport ? ReminderTime : null,
             MedicationStartDate = UsesMedicationSupport ? MedicationStartDate : null,
+            CreatedUtc = existingProfile?.CreatedUtc ?? DateTime.UtcNow,
             UpdatedUtc = DateTime.UtcNow
         };
 
@@ -71,7 +86,9 @@ public partial class QuickSetupViewModel : BaseViewModel
 #if ANDROID
         var permission = await Permissions.RequestAsync<Permissions.PostNotifications>();
 
-        if (UsesMedicationSupport && profile.MedicationReminderTime.HasValue && profile.MedicationStartDate.HasValue)
+        if (UsesMedicationSupport &&
+            profile.MedicationReminderTime.HasValue &&
+            profile.MedicationStartDate.HasValue)
         {
             if (permission == PermissionStatus.Granted)
             {
@@ -80,6 +97,11 @@ public partial class QuickSetupViewModel : BaseViewModel
                     profile.MedicationStartDate.Value,
                     profile.MedicationReminderTime.Value);
             }
+            else
+            {
+                StatusMessage = "Preferences saved, but notification permission was not granted.";
+                return;
+            }
         }
         else
         {
@@ -87,6 +109,6 @@ public partial class QuickSetupViewModel : BaseViewModel
         }
 #endif
 
-        await Shell.Current.GoToAsync("//TodayPage");
+        StatusMessage = "Preferences saved.";
     }
 }

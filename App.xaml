@@ -8,7 +8,7 @@
         <ResourceDictionary>
 
             <!-- Core Colours -->
-            <Color x:Key="Primary">#6D5BD0</Color>
+            <Color x:Key="Primary">#b3cf99</Color>
             <Color x:Key="Secondary">#F5F5F5</Color>
             <Color x:Key="TextPrimary">#1E1E1E</Color>
 
@@ -37,7 +37,7 @@
                 <Setter Property="Padding" Value="14,10" />
                 <Setter Property="CornerRadius" Value="10" />
                 <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                <Setter Property="TextColor" Value="White" />
+                <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
             </Style>
 
             <!-- Arlo message (outline only) -->

@@ -22,6 +22,10 @@ public partial class TodayPage : ContentPage
         await _viewModel.LoadTruthBombAsync();
         await _viewModel.LoadDataAsync();
     }
+    private async void OnPreferencesClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(PreferencesPage));
+    }
 
-   
+
 }

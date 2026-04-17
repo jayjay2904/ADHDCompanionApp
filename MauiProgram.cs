@@ -5,6 +5,10 @@ using ADHDCompanionApp.ViewModels;
 using ADHDCompanionApp.Views;
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
+using ADHDCompanionApp.Services.Interfaces;
+#if ANDROID
+using ADHDCompanionApp.Platforms.Android.Services;
+#endif
 
 namespace ADHDCompanionApp
 {
@@ -38,11 +42,18 @@ namespace ADHDCompanionApp
             builder.Services.AddTransient<SupportViewModel>();
             builder.Services.AddTransient<ProgressViewModel>();
             builder.Services.AddTransient<ArloViewModel>();
+            builder.Services.AddTransient<PreferencesViewModel>();
 
             // Register Pages
             builder.Services.AddSingleton<AppShell>();
             builder.Services.AddTransient<WelcomePage>();
             builder.Services.AddTransient<QuickSetupPage>();
+            builder.Services.AddTransient<PreferencesPage>();
+
+            //Android
+            #if ANDROID
+            builder.Services.AddSingleton<INotificationService, NotificationService>();
+            #endif
 
 #if DEBUG
             builder.Logging.AddDebug();

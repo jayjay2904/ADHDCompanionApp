@@ -14,7 +14,12 @@
                 TextColor="White"
                 FontSize="28"
                 FontAttributes="Bold" />
-            
+
+            <Button
+                Text="Preferences"
+                Clicked="OnPreferencesClicked"
+                Style="{StaticResource PrimaryButtonStyle}" />
+
             <Label
                 Text="{Binding FlowMessage}"
                 FontSize="16"
@@ -46,14 +51,21 @@
                     <Slider
                         Minimum="1"
                         Maximum="5"
-                        Value="{Binding EnergyLevel}" />
+                        Value="{Binding EnergyLevel}"
+                        MinimumTrackColor="#B3CF99"
+                        MaximumTrackColor="Grey"
+                        ThumbColor="#B3CF99"
+                        />
                     <Label Text="{Binding EnergyLevel}" />
 
                     <Label Text="Focus" />
                     <Slider
                         Minimum="1"
                         Maximum="5"
-                        Value="{Binding FocusLevel}" />
+                        Value="{Binding FocusLevel}"
+                        MinimumTrackColor="#B3CF99"
+                        MaximumTrackColor="Grey"
+                        ThumbColor="#B3CF99"/>
                     <Label Text="{Binding FocusLevel}" />
 
                     <Editor

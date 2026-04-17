@@ -12,6 +12,7 @@ public class UserProfileService : IUserProfileService
     private const string OnboardingCompleteKey = "profile_onboarding_complete";
     private const string ReminderHourKey = "profile_reminder_hour";
     private const string ReminderMinuteKey = "profile_reminder_minute";
+    private const string MedicationStartDateKey = "profile_medication_start_date";
 
     public Task<UserProfile?> GetProfileAsync()
     {
@@ -32,12 +33,21 @@ public class UserProfileService : IUserProfileService
             reminderTime = new TimeSpan(hour, minute, 0);
         }
 
+        var startDateText = Preferences.Default.Get(MedicationStartDateKey, string.Empty);
+        DateTime? medicationStartDate = null;
+
+        if (DateTime.TryParse(startDateText, out var parsedDate))
+        {
+            medicationStartDate = parsedDate;
+        }
+
         var profile = new UserProfile
         {
             Nickname = nickname,
             UsesMedicationSupport = Preferences.Default.Get(UsesMedicationSupportKey, false),
             UsesTaskSupport = Preferences.Default.Get(UsesTaskSupportKey, true),
-            MedicationReminderTime = reminderTime
+            MedicationReminderTime = reminderTime,
+            MedicationStartDate = medicationStartDate
         };
 
         return Task.FromResult<UserProfile?>(profile);
@@ -54,6 +64,20 @@ public class UserProfileService : IUserProfileService
         {
             Preferences.Default.Set(ReminderHourKey, profile.MedicationReminderTime.Value.Hours);
             Preferences.Default.Set(ReminderMinuteKey, profile.MedicationReminderTime.Value.Minutes);
+        }
+        else
+        {
+            Preferences.Default.Remove(ReminderHourKey);
+            Preferences.Default.Remove(ReminderMinuteKey);
+        }
+
+        if (profile.MedicationStartDate.HasValue)
+        {
+            Preferences.Default.Set(MedicationStartDateKey, profile.MedicationStartDate.Value.ToString("O"));
+        }
+        else
+        {
+            Preferences.Default.Remove(MedicationStartDateKey);
         }
 
         return Task.CompletedTask;

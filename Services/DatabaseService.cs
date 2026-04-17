@@ -12,7 +12,7 @@ public class DatabaseService
         if (_database is not null)
             return;
 
-        var resetDatabase = false;
+        var resetDatabase = true;
 
         if (resetDatabase && File.Exists(Constants.DatabasePath))
         {

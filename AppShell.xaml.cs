@@ -15,6 +15,7 @@ public partial class AppShell : Shell
 
         Routing.RegisterRoute(nameof(WelcomePage), typeof(WelcomePage));
         Routing.RegisterRoute(nameof(QuickSetupPage), typeof(QuickSetupPage));
+        Routing.RegisterRoute(nameof(PreferencesPage), typeof(PreferencesPage));
     }
 
     public async Task InitialiseAsync()
