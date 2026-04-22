@@ -1,0 +1,21 @@
+﻿# Snapshot – 2026-04-17 – Reminders Working (Not Exact)
+
+## 🔧 Current State
+- Android medication reminders implemented
+- Notifications firing successfully
+- Preferences and scheduling working
+
+## 🚧 In Progress
+- Improving reminder accuracy
+
+## ❌ Known Issues
+- Notifications delayed by 2–3 minutes
+- Using SetAndAllowWhileIdle (inexact)
+
+## 🎯 Next Steps
+- Implement exact alarm permission flow
+- Switch to SetExactAndAllowWhileIdle when allowed
+
+## 🧠 Notes
+- Works reliably when phone not connected to laptop
+- Delay is Android behaviour, not a bug

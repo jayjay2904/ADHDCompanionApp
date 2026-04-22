@@ -1,14 +1,15 @@
+using ADHDCompanionApp.Models.Entities;
+using ADHDCompanionApp.Services;
+using ADHDCompanionApp.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ADHDCompanionApp.Models.Entities;
-using ADHDCompanionApp.Services.Interfaces;
 
 namespace ADHDCompanionApp.ViewModels;
 
 public partial class PreferencesViewModel : BaseViewModel
 {
     private readonly IUserProfileService _profileService;
-    private readonly INotificationService _notificationService;
+    private readonly IReminderEngine _reminderEngine;
 
     [ObservableProperty]
     private string nickname = string.Empty;
@@ -29,11 +30,11 @@ public partial class PreferencesViewModel : BaseViewModel
     private string statusMessage = string.Empty;
 
     public PreferencesViewModel(
-        IUserProfileService profileService,
-        INotificationService notificationService)
+    IUserProfileService profileService,
+    IReminderEngine reminderEngine)
     {
         _profileService = profileService;
-        _notificationService = notificationService;
+        _reminderEngine = reminderEngine;
 
         Title = "Preferences";
         LoadPreferences();
@@ -84,31 +85,66 @@ public partial class PreferencesViewModel : BaseViewModel
         await _profileService.SaveProfileAsync(profile);
 
 #if ANDROID
-        var permission = await Permissions.RequestAsync<Permissions.PostNotifications>();
-
         if (UsesMedicationSupport &&
             profile.MedicationReminderTime.HasValue &&
             profile.MedicationStartDate.HasValue)
         {
+            var permission = await Permissions.RequestAsync<Permissions.PostNotifications>();
+
             if (permission == PermissionStatus.Granted)
             {
-                await _notificationService.ScheduleDailyMedicationReminderAsync(
-                    profile.Nickname,
-                    profile.MedicationStartDate.Value,
-                    profile.MedicationReminderTime.Value);
+                var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
+
+                if (!canScheduleExact)
+                {
+                    var openSettings = await Shell.Current.DisplayAlert(
+                        "More accurate reminders",
+                        "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
+                        "Open settings",
+                        "Not now");
+
+                    if (openSettings)
+                    {
+                        await _reminderEngine.OpenExactReminderSettingsAsync();
+                    }
+                }
+
+                await _reminderEngine.ScheduleMedicationReminderAsync(profile);
+
+                StatusMessage = $"Preferences saved. Reminder set for {profile.MedicationReminderTime.Value:hh\\:mm}.";
             }
             else
             {
+                await _reminderEngine.CancelMedicationReminderAsync();
                 StatusMessage = "Preferences saved, but notification permission was not granted.";
                 return;
             }
         }
         else
         {
-            await _notificationService.CancelMedicationReminderAsync();
+            await _reminderEngine.CancelMedicationReminderAsync();
+            StatusMessage = "Preferences saved. Medication reminders are off.";
         }
-#endif
-
+#else
         StatusMessage = "Preferences saved.";
+#endif
+    }
+
+    [RelayCommand]
+    private async Task TestRestoreReminder()
+    {
+        try
+        {
+            StatusMessage = "Testing restore...";
+
+            await _reminderEngine.RestoreRemindersAsync();
+
+            StatusMessage = "Restore test completed. Check logs.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Restore test failed.";
+            System.Diagnostics.Debug.WriteLine($"[RestoreTest] Error: {ex}");
+        }
     }
 }

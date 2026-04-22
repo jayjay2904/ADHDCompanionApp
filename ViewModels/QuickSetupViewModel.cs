@@ -8,7 +8,7 @@ namespace ADHDCompanionApp.ViewModels;
 public partial class QuickSetupViewModel : BaseViewModel
 {
     private readonly IUserProfileService _profileService;
-    private readonly INotificationService _notificationService;
+    private readonly IReminderEngine _reminderEngine;
 
     [ObservableProperty]
     private string nickname = string.Empty;
@@ -27,10 +27,10 @@ public partial class QuickSetupViewModel : BaseViewModel
 
     public QuickSetupViewModel(
     IUserProfileService profileService,
-    INotificationService notificationService)
+    IReminderEngine reminderEngine)
     {
         _profileService = profileService;
-        _notificationService = notificationService;
+        _reminderEngine = reminderEngine;
         LoadExistingProfile();
     }
 
@@ -45,6 +45,7 @@ public partial class QuickSetupViewModel : BaseViewModel
         UsesMedicationSupport = profile.UsesMedicationSupport;
         UsesTaskSupport = profile.UsesTaskSupport;
         ReminderTime = profile.MedicationReminderTime ?? new TimeSpan(9, 0, 0);
+        MedicationStartDate = profile.MedicationStartDate ?? DateTime.Today;
     }
 
     [RelayCommand]
@@ -69,21 +70,43 @@ public partial class QuickSetupViewModel : BaseViewModel
         await _profileService.SaveProfileAsync(profile);
 
 #if ANDROID
-        var permission = await Permissions.RequestAsync<Permissions.PostNotifications>();
-
         if (UsesMedicationSupport && profile.MedicationReminderTime.HasValue && profile.MedicationStartDate.HasValue)
         {
-            if (permission == PermissionStatus.Granted)
+            var notificationPermission = await Permissions.RequestAsync<Permissions.PostNotifications>();
+
+            if (notificationPermission == PermissionStatus.Granted)
             {
-                await _notificationService.ScheduleDailyMedicationReminderAsync(
-                    profile.Nickname,
-                    profile.MedicationStartDate.Value,
-                    profile.MedicationReminderTime.Value);
+                var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
+
+                if (!canScheduleExact)
+                {
+                    var openSettings = await Shell.Current.DisplayAlert(
+                        "More accurate reminders",
+                        "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
+                        "Open settings",
+                        "Not now");
+
+                    if (openSettings)
+                    {
+                        await _reminderEngine.OpenExactReminderSettingsAsync();
+                    }
+                }
+
+                await _reminderEngine.ScheduleMedicationReminderAsync(profile);
+            }
+            else
+            {
+                await Shell.Current.DisplayAlert(
+                    "Notifications are off",
+                    "Medication reminders need notification permission before I can send them.",
+                    "OK");
+
+                await _reminderEngine.CancelMedicationReminderAsync();
             }
         }
         else
         {
-            await _notificationService.CancelMedicationReminderAsync();
+            await _reminderEngine.CancelMedicationReminderAsync();
         }
 #endif
 

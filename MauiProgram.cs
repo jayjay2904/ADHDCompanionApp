@@ -34,6 +34,7 @@ namespace ADHDCompanionApp
             builder.Services.AddSingleton<ITruthBombService, TruthBombService>();
             builder.Services.AddSingleton<ISupportService, SupportService>();
             builder.Services.AddSingleton<IArloService, ArloService>();
+            builder.Services.AddSingleton<IReminderEngine, ReminderEngine>();
 
             // Register ViewModels
             builder.Services.AddSingleton<MainViewModel>();
@@ -51,9 +52,9 @@ namespace ADHDCompanionApp
             builder.Services.AddTransient<PreferencesPage>();
 
             //Android
-            #if ANDROID
-            builder.Services.AddSingleton<INotificationService, NotificationService>();
-            #endif
+#if ANDROID
+            builder.Services.AddSingleton<IPlatformReminderScheduler, AndroidReminderScheduler>();
+#endif
 
 #if DEBUG
             builder.Logging.AddDebug();

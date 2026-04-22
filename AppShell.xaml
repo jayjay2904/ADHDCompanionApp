@@ -25,5 +25,10 @@
             Title="Arlo"
             Route="ArloPage"
             ContentTemplate="{DataTemplate views:ArloPage}" />
+
+        <ShellContent
+            Title="Preference"
+            Route="PreferencesPage"
+            ContentTemplate="{DataTemplate views:PreferencesPage}" />
     </TabBar>
 </Shell>

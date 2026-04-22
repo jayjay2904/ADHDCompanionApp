@@ -15,10 +15,10 @@
                 FontSize="28"
                 FontAttributes="Bold" />
 
-            <Button
+           <!-- <Button
                 Text="Preferences"
                 Clicked="OnPreferencesClicked"
-                Style="{StaticResource PrimaryButtonStyle}" />
+                Style="{StaticResource PrimaryButtonStyle}" /> -->
 
             <Label
                 Text="{Binding FlowMessage}"

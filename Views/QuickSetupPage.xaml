@@ -25,7 +25,9 @@
                 TextColor="White" />
 
             <Switch
-                IsToggled="{Binding UsesMedicationSupport}" />
+                IsToggled="{Binding UsesMedicationSupport}"
+                ThumbColor="#b3cf99"
+                OnColor="#b3cf99"/>
 
             <VerticalStackLayout
                 IsVisible="{Binding UsesMedicationSupport}"
@@ -56,8 +58,10 @@
                 TextColor="White" />
 
             <Switch
-                IsToggled="{Binding UsesTaskSupport}" />
-
+                IsToggled="{Binding UsesTaskSupport}"
+                ThumbColor="#b3cf99"
+                OnColor="#b3cf99"/>
+                
             <Button
                 Text="Continue"
                 Command="{Binding SaveCommand}"

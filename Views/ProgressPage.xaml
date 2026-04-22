@@ -77,7 +77,7 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
             </Frame>
-
+            
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>
