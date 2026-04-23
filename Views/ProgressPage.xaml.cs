@@ -18,4 +18,8 @@ public partial class ProgressPage : ContentPage
         base.OnAppearing();
         await _viewModel.LoadProgressAsync();
     }
+    private async void OnPreferencesClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(PreferencesPage));
+    }
 }

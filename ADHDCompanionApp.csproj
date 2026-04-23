@@ -28,7 +28,7 @@
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
 		<!-- Display name -->
-		<ApplicationTitle>ADHDCompanionApp</ApplicationTitle>
+		<ApplicationTitle>Arlo</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.companyname.adhdcompanionapp</ApplicationId>
@@ -49,10 +49,10 @@
 
 	<ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+		<MauiIcon Include="Resources\AppIcon\appicon.svg"  />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#B3CF99" BaseSize="512,512" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
@@ -76,6 +76,7 @@
 	<ItemGroup>
 	  <Folder Include="Models\Enums\" />
 	  <Folder Include="Data\" />
+	  <Folder Include="Platforms\Android\Resources\Splash\" />
 	  <Folder Include="Resources\Seed\" />
 	</ItemGroup>
 
@@ -116,6 +117,12 @@
 	  <MauiXaml Update="Views\WelcomePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Views\PreferencePage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </None>
 	</ItemGroup>
 
 </Project>

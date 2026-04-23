@@ -51,65 +51,76 @@ public partial class QuickSetupViewModel : BaseViewModel
     [RelayCommand]
     private async Task Save()
     {
-        if (string.IsNullOrWhiteSpace(Nickname))
+        try
         {
-            await Shell.Current.DisplayAlert("Just one thing", "Please tell me what to call you.", "OK");
-            return;
-        }
+            if (string.IsNullOrWhiteSpace(Nickname))
+            {
+                await Shell.Current.DisplayAlert("Just one thing", "Please tell me what to call you.", "OK");
+                return;
+            }
 
-        var profile = new UserProfile
-        {
-            Nickname = Nickname.Trim(),
-            UsesMedicationSupport = UsesMedicationSupport,
-            UsesTaskSupport = UsesTaskSupport,
-            MedicationReminderTime = UsesMedicationSupport ? ReminderTime : null,
-            MedicationStartDate = UsesMedicationSupport ? MedicationStartDate : null,
-            UpdatedUtc = DateTime.UtcNow
-        };
+            var profile = new UserProfile
+            {
+                Nickname = Nickname.Trim(),
+                UsesMedicationSupport = UsesMedicationSupport,
+                UsesTaskSupport = UsesTaskSupport,
+                MedicationReminderTime = UsesMedicationSupport ? ReminderTime : null,
+                MedicationStartDate = UsesMedicationSupport ? MedicationStartDate : null,
+                UpdatedUtc = DateTime.UtcNow
+            };
 
-        await _profileService.SaveProfileAsync(profile);
+            await _profileService.SaveProfileAsync(profile);
 
 #if ANDROID
-        if (UsesMedicationSupport && profile.MedicationReminderTime.HasValue && profile.MedicationStartDate.HasValue)
-        {
-            var notificationPermission = await Permissions.RequestAsync<Permissions.PostNotifications>();
-
-            if (notificationPermission == PermissionStatus.Granted)
+            if (UsesMedicationSupport && profile.MedicationReminderTime.HasValue && profile.MedicationStartDate.HasValue)
             {
-                var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
+                var notificationPermission = await Permissions.RequestAsync<Permissions.PostNotifications>();
 
-                if (!canScheduleExact)
+                if (notificationPermission == PermissionStatus.Granted)
                 {
-                    var openSettings = await Shell.Current.DisplayAlert(
-                        "More accurate reminders",
-                        "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
-                        "Open settings",
-                        "Not now");
+                    var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
 
-                    if (openSettings)
+                    if (!canScheduleExact)
                     {
-                        await _reminderEngine.OpenExactReminderSettingsAsync();
-                    }
-                }
+                        var openSettings = await Shell.Current.DisplayAlert(
+                            "More accurate reminders",
+                            "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
+                            "Open settings",
+                            "Not now");
 
-                await _reminderEngine.ScheduleMedicationReminderAsync(profile);
+                        if (openSettings)
+                        {
+                            await _reminderEngine.OpenExactReminderSettingsAsync();
+                        }
+                    }
+
+                    await _reminderEngine.ScheduleMedicationReminderAsync(profile);
+                }
+                else
+                {
+                    await Shell.Current.DisplayAlert(
+                        "Notifications are off",
+                        "Medication reminders need notification permission before I can send them.",
+                        "OK");
+
+                    await _reminderEngine.CancelMedicationReminderAsync();
+                }
             }
             else
             {
-                await Shell.Current.DisplayAlert(
-                    "Notifications are off",
-                    "Medication reminders need notification permission before I can send them.",
-                    "OK");
-
                 await _reminderEngine.CancelMedicationReminderAsync();
             }
-        }
-        else
-        {
-            await _reminderEngine.CancelMedicationReminderAsync();
-        }
 #endif
 
-        await Shell.Current.GoToAsync("//TodayPage");
+            await Shell.Current.GoToAsync("//TodayPage");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[QuickSetup] Save failed: {ex}");
+            await Shell.Current.DisplayAlert(
+                "Something went wrong",
+                "I couldn't save your setup properly. Please try again.",
+                "OK");
+        }
     }
 }

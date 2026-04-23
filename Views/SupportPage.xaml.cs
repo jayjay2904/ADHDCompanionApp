@@ -6,16 +6,22 @@ public partial class SupportPage : ContentPage
 {
     private readonly SupportViewModel _viewModel;
 
-    public SupportPage(SupportViewModel vm)
+    public SupportPage(SupportViewModel viewModel)
     {
         InitializeComponent();
-        _viewModel = vm;
-        BindingContext = _viewModel;
+        BindingContext = viewModel;
+        _viewModel = viewModel;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
         await _viewModel.LoadSupportOptionsAsync();
+    }
+
+    private async void OnPreferencesClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(PreferencesPage));
     }
 }

@@ -3,8 +3,7 @@
     x:Class="ADHDCompanionApp.Views.PreferencesPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Preferences"
-    BackgroundColor="#121212">
+    Title="Preferences">
 
     <ScrollView>
         <VerticalStackLayout Padding="30" Spacing="20">
@@ -13,75 +12,76 @@
                 Text="Preferences"
                 FontSize="28"
                 FontAttributes="Bold"
-                TextColor="White" />
+                TextColor="{StaticResource TextPrimary}" />
 
             <Label
                 Text="Update your name, reminders, and support settings."
                 FontSize="14"
-                TextColor="#CCCCCC" />
+                TextColor="{StaticResource TextSecondary}" />
 
-            <Label
-                Text="What should I call you?"
-                TextColor="White" />
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <VerticalStackLayout Spacing="16">
 
-            <Entry
-                Placeholder="Your name or nickname"
-                Text="{Binding Nickname}"
-                TextColor="White"
-                PlaceholderColor="#BBBBBB"
-                BackgroundColor="#1E1E1E" />
+                    <Label
+                        Text="What should I call you?"
+                        TextColor="{StaticResource TextPrimary}" />
 
-            <Label
-                Text="Do you want medication reminders?"
-                TextColor="White" />
+                    <Entry
+                        Placeholder="Your name or nickname"
+                        Text="{Binding Nickname}" />
 
-            <Switch
-                IsToggled="{Binding UsesMedicationSupport}"
-                ThumbColor="#b3cf99"
-                OnColor="#b3cf99"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label
+                            Text="Do you want medication reminders?"
+                            TextColor="{StaticResource TextPrimary}" />
 
-            <VerticalStackLayout
-                IsVisible="{Binding UsesMedicationSupport}"
-                Spacing="10">
+                        <Switch
+                            IsToggled="{Binding UsesMedicationSupport}"
+                            ThumbColor="{StaticResource Primary}"
+                            OnColor="{StaticResource Primary}" />
+                    </VerticalStackLayout>
 
-                <Label
-                    Text="What time would you like your reminder?"
-                    TextColor="White" />
+                    <VerticalStackLayout
+                        IsVisible="{Binding UsesMedicationSupport}"
+                        Spacing="10">
 
-                <TimePicker
-                    Time="{Binding ReminderTime}"
-                    TextColor="White"
-                    BackgroundColor="#1E1E1E" />
+                        <Label
+                            Text="What time would you like your reminder?"
+                            TextColor="{StaticResource TextSecondary}" />
 
-                <Label
-                    Text="When should reminders start?"
-                    TextColor="White" />
+                        <TimePicker
+                            Time="{Binding ReminderTime}" />
 
-                <DatePicker
-                    Date="{Binding MedicationStartDate}"
-                    TextColor="White"
-                    BackgroundColor="#1E1E1E" />
-            </VerticalStackLayout>
+                        <Label
+                            Text="When should reminders start?"
+                            TextColor="{StaticResource TextSecondary}" />
 
-            <Label
-                Text="Do you want task support?"
-                TextColor="White" />
+                        <DatePicker
+                            Date="{Binding MedicationStartDate}" />
+                    </VerticalStackLayout>
 
-            <Switch
-                IsToggled="{Binding UsesTaskSupport}"
-                ThumbColor="#b3cf99"
-                OnColor="#b3cf99"/>
+                    <VerticalStackLayout Spacing="8">
+                        <Label
+                            Text="Do you want task support?"
+                            TextColor="{StaticResource TextPrimary}" />
 
-            <Label
-                Text="{Binding StatusMessage}"
-                TextColor="Coral"
-                FontSize="14" />
+                        <Switch
+                            IsToggled="{Binding UsesTaskSupport}"
+                            ThumbColor="{StaticResource Primary}"
+                            OnColor="{StaticResource Primary}" />
+                    </VerticalStackLayout>
 
-            <Button
-                Text="Save Preferences"
-                Command="{Binding SaveCommand}"
-                Style="{StaticResource PrimaryButtonStyle}" />
-            
+                    <Label
+                        Text="{Binding StatusMessage}"
+                        Style="{StaticResource StatusMessageStyle}" />
+
+                    <Button
+                        Text="Save Preferences"
+                        Command="{Binding SaveCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}" />
+
+                </VerticalStackLayout>
+            </Frame>
 
         </VerticalStackLayout>
     </ScrollView>

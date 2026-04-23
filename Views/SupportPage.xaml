@@ -3,51 +3,159 @@
     x:Class="ADHDCompanionApp.Views.SupportPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Support"
-    BackgroundColor="#121212">
+    Title="Support">
 
-    <ScrollView>
+    <ContentPage.ToolbarItems>
+        <ToolbarItem
+            IconImageSource="gear.svg"
+            Order="Primary"
+            Priority="0"
+            Clicked="OnPreferencesClicked" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView x:Name="SupportScrollView">
         <VerticalStackLayout Padding="20" Spacing="12">
 
             <Label
                 Text="Support"
                 FontSize="28"
                 FontAttributes="Bold"
-                TextColor="White"/>
+                TextColor="{StaticResource TextPrimary}" />
 
             <Label
-                Text="What do you need help with right now?"
+                Text="Pick what feels closest. You only need one small next step."
                 FontSize="16"
                 Opacity="0.8"
-                TextColor="White"/>
+                TextColor="{StaticResource TextSecondary}" />
 
             <Label
-                Text="Quick Help"
+                Text="Right now I feel..."
                 Style="{StaticResource SectionTitleStyle}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
-                <CollectionView ItemsSource="{Binding SupportOptions}">
+                <CollectionView ItemsSource="{Binding SupportOptions}" SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Button
-                                Text="{Binding Title}"
-                                Style="{StaticResource PrimaryButtonStyle}"
+                            <Frame
+                                Style="{StaticResource CardFrameStyle}"
                                 Margin="0,6,0,0"
-                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectSupportOptionCommand}"
-                                CommandParameter="{Binding .}" />
+                                Padding="16">   
+
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectSupportOptionCommand}"
+                                        CommandParameter="{Binding .}" />   
+                                </Frame.GestureRecognizers>
+
+                                <VerticalStackLayout Spacing="4">
+                                    <Label
+                                        Text="{Binding Title}"
+                                        FontSize="17"
+                                        FontAttributes="Bold"
+                                        TextColor="{StaticResource TextPrimary}" /> 
+
+                                    <Label
+                                        Text="Tap for quick support"
+                                        FontSize="13"
+                                        TextColor="{StaticResource TextSecondary}"
+                                        Opacity="0.8" />    
+                                </VerticalStackLayout>
+                            </Frame>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
             </Frame>
 
             <Label
-                Text="Support Response"
+                Text="Support plan"
                 Style="{StaticResource SectionTitleStyle}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
-                <Label
-                    Text="{Binding SelectedSupportText}"
-                    FontSize="16" />
+                <VerticalStackLayout
+    x:Name="SupportPlanSection"
+    IsVisible="{Binding HasSelectedOption}"
+    Spacing="8">
+
+                    <Label
+        Text="Support plan"
+        Style="{StaticResource SectionTitleStyle}" />
+
+                    <Frame Style="{StaticResource CardFrameStyle}">
+                        <VerticalStackLayout Spacing="8">
+
+                            <Label
+                Text="{Binding SelectedSupportTitle}"
+                FontSize="18"
+                FontAttributes="Bold"
+                TextColor="{StaticResource TextPrimary}" />
+
+                            <Label
+                Text="{Binding SelectedValidationText}"
+                FontSize="15"
+                LineBreakMode="WordWrap"
+                MaxLines="3"
+                TextColor="{StaticResource TextPrimary}" />
+
+                            <Label
+                Text="Do this now"
+                FontAttributes="Bold"
+                FontSize="14"
+                TextColor="{StaticResource TextPrimary}" />
+
+                            <Label
+                Text="{Binding SelectedImmediateActionText}"
+                FontSize="15"
+                LineBreakMode="WordWrap"
+                MaxLines="3"
+                TextColor="{StaticResource TextSecondary}" />
+
+                            <Label
+                Text="Tiny next step"
+                FontAttributes="Bold"
+                FontSize="14"
+                TextColor="{StaticResource TextPrimary}" />
+
+                            <Label
+                Text="{Binding SelectedNextStepText}"
+                FontSize="15"
+                LineBreakMode="WordWrap"
+                MaxLines="3"
+                TextColor="{StaticResource TextSecondary}" />
+
+                            <HorizontalStackLayout Spacing="10" Margin="0,8,0,0">
+                                <Button
+                    Text="Try another step"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Command="{Binding TryAnotherStepCommand}" />
+
+                                <Button
+                    Text="I'm okay now"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Command="{Binding ClearSupportPlanCommand}" />
+                            </HorizontalStackLayout>
+
+                        </VerticalStackLayout>
+                    </Frame>
+                </VerticalStackLayout>
+            </Frame>
+
+            <Label
+                Text="Quick reset"
+                Style="{StaticResource SectionTitleStyle}"
+                Margin="0,12,0,0"/>
+
+            <Frame Style="{StaticResource CardFrameStyle}">
+                <VerticalStackLayout Spacing="10">
+                    <Label
+                        Text="{Binding QuickResetText}"
+                        FontSize="16"
+                        TextColor="{StaticResource TextPrimary}" /> 
+
+                    <Button
+                        Text="Reset me"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding ResetQuickSupportCommand}" /> 
+                </VerticalStackLayout>
             </Frame>
 
         </VerticalStackLayout>

@@ -6,10 +6,16 @@
     xmlns:views="clr-namespace:ADHDCompanionApp.Views">
 
     <TabBar>
+        
         <ShellContent
             Title="Today"
             Route="TodayPage"
             ContentTemplate="{DataTemplate views:TodayPage}" />
+
+        <ShellContent
+            Title="Arlo"
+            Route="ArloPage"
+            ContentTemplate="{DataTemplate views:ArloPage}" />
 
         <ShellContent
             Title="Support"
@@ -20,15 +26,5 @@
             Title="Progress"
             Route="ProgressPage"
             ContentTemplate="{DataTemplate views:ProgressPage}" />
-
-        <ShellContent
-            Title="Arlo"
-            Route="ArloPage"
-            ContentTemplate="{DataTemplate views:ArloPage}" />
-
-        <ShellContent
-            Title="Preference"
-            Route="PreferencesPage"
-            ContentTemplate="{DataTemplate views:PreferencesPage}" />
     </TabBar>
 </Shell>

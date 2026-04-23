@@ -13,6 +13,8 @@ public interface IReminderEngine
 
     Task ScheduleMedicationReminderAsync(UserProfile profile);
     Task CancelMedicationReminderAsync();
+    Task ScheduleTaskReminderAsync(TaskItem task);
+    Task CancelTaskReminderAsync(TaskItem task);
     Task RestoreRemindersAsync();
 
     Task HandleTriggeredReminderAsync(ReminderRequest request);

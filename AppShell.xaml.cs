@@ -31,4 +31,8 @@ public partial class AppShell : Shell
             await GoToAsync("//TodayPage");
         }
     }
+    private async void OnPreferencesClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(PreferencesPage));
+    }
 }

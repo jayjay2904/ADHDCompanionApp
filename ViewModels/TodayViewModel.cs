@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
-
 namespace ADHDCompanionApp.ViewModels;
 
 public partial class TodayViewModel : BaseViewModel
@@ -55,16 +54,22 @@ public partial class TodayViewModel : BaseViewModel
 
     public ObservableCollection<TaskItem> Tasks { get; } = new();
 
-    public TodayViewModel(ICheckInService checkInService, ITaskService taskService, IWinService winService, ITruthBombService truthBombService, IUserProfileService profileService)
+    public TodayViewModel(
+        ICheckInService checkInService,
+        ITaskService taskService,
+        IWinService winService,
+        ITruthBombService truthBombService,
+        IUserProfileService profileService)
     {
         _checkInService = checkInService;
         _taskService = taskService;
         _winService = winService;
         _truthBombService = truthBombService;
         _profileService = profileService;
+
         Title = "Today";
-        
     }
+
     public async Task LoadDataAsync()
     {
         await LoadTasksAsync();
@@ -78,152 +83,341 @@ public partial class TodayViewModel : BaseViewModel
     [RelayCommand]
     private async Task SaveCheckIn()
     {
-        var entry = new CheckInEntry
+        try
         {
-            Mood = Mood,
-            EnergyLevel = EnergyLevel,
-            FocusLevel = FocusLevel,
-            Note = Note
-        };
+            var entry = new CheckInEntry
+            {
+                Mood = Mood,
+                EnergyLevel = EnergyLevel,
+                FocusLevel = FocusLevel,
+                Note = Note
+            };
 
-        await _checkInService.SaveCheckInAsync(entry);
+            await _checkInService.SaveCheckInAsync(entry);
 
-        GenerateNextStepSuggestion();
+            GenerateNextStepSuggestion();
 
-        StatusMessage = "Check-in saved.";
+            StatusMessage = "Check-in saved.";
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] SaveCheckIn failed: {ex}");
+            StatusMessage = "Could not save check-in.";
+        }
     }
 
     [RelayCommand]
     private async Task AddTask()
     {
-        if (string.IsNullOrWhiteSpace(NewTaskTitle))
+        try
         {
-            return;
+            if (string.IsNullOrWhiteSpace(NewTaskTitle))
+            {
+                return;
+            }
+
+            var task = new TaskItem
+            {
+                Title = NewTaskTitle.Trim(),
+                ReminderEnabled = false,
+                ReminderDateTime = null,
+                IsEditingReminder = false
+            };
+
+            await _taskService.AddTaskAsync(task);
+
+            NewTaskTitle = string.Empty;
+
+            StatusMessage = "Task added.";
+            await Task.Delay(2000);
+            StatusMessage = string.Empty;
+
+            await LoadTasksAsync();
+            UpdateFlowMessage();
         }
-
-        var task = new TaskItem
+        catch (Exception ex)
         {
-            Title = NewTaskTitle.Trim()
-        };
-
-        await _taskService.AddTaskAsync(task);
-
-        NewTaskTitle = string.Empty;
-
-        StatusMessage = "Task added.";
-        await Task.Delay(2000);
-        StatusMessage = string.Empty;
-
-        await LoadTasksAsync();
-        UpdateFlowMessage();
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] AddTask failed: {ex}");
+            StatusMessage = "Could not add task.";
+        }
     }
 
     [RelayCommand]
     private async Task ToggleTask(TaskItem task)
     {
-        if (task is null)
-            return;
+        try
+        {
 
-        task.IsCompleted = !task.IsCompleted;
-        task.CompletedUtc = task.IsCompleted ? DateTime.UtcNow : null;
+            if (task is null)
+                return;
 
-        await _taskService.UpdateTaskAsync(task);
+            task.IsCompleted = !task.IsCompleted;
+            task.CompletedUtc = task.IsCompleted ? DateTime.UtcNow : null;
 
-        StatusMessage = task.IsCompleted
-            ? "Nice — task completed."
-            : "Task marked as active again.";
+            if (task.IsCompleted)
+            {
+                task.IsEditingReminder = false;
+            }
 
-        await LoadTasksAsync();
-        UpdateFlowMessage();
+            await _taskService.UpdateTaskAsync(task);
+
+            StatusMessage = task.IsCompleted
+                ? "Nice — task completed."
+                : "Task marked as active again.";
+
+            await LoadTasksAsync();
+            UpdateFlowMessage();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] ToggleTask failed: {ex}");
+            StatusMessage = "Could not update task.";
+        }
+    }
+
+    [RelayCommand]
+    private async Task ToggleTaskReminder(TaskItem task)
+    {
+        try
+        {
+            if (task is null)
+                return;
+
+            if (task.IsCompleted)
+                return;
+
+            task.ReminderEnabled = !task.ReminderEnabled;
+
+            if (task.ReminderEnabled)
+            {
+                var defaultDateTime = task.ReminderDateTime ?? DateTime.Now.AddMinutes(10);
+
+                task.ReminderDate = defaultDateTime.Date;
+                task.ReminderTime = defaultDateTime.TimeOfDay;
+                task.IsEditingReminder = true;
+            }
+            else
+            {
+                task.ReminderDateTime = null;
+                task.IsEditingReminder = false;
+
+                await _taskService.UpdateTaskAsync(task);
+
+                StatusMessage = "Reminder removed.";
+                await LoadTasksAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] ToggleTaskReminder failed: {ex}");
+            StatusMessage = "Could not update reminder.";
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveTaskReminder(TaskItem task)
+    {
+        try
+        {
+            if (task is null)
+                return;
+
+            if (task.IsCompleted)
+                return;
+
+            if (!task.ReminderEnabled)
+                return;
+
+            var reminderDateTime = task.ReminderDate.Date.Add(task.ReminderTime);
+
+            if (reminderDateTime <= DateTime.Now)
+            {
+                StatusMessage = "Pick a future date and time for the reminder.";
+                return;
+            }
+
+            task.ReminderDateTime = reminderDateTime;
+            task.IsEditingReminder = false;
+
+            await _taskService.UpdateTaskAsync(task);
+
+            StatusMessage = "Task reminder saved.";
+
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] SaveTaskReminder failed: {ex}");
+            StatusMessage = "Could not save task reminder.";
+        }
     }
 
     [RelayCommand]
     private async Task AddWin()
     {
-        if (string.IsNullOrWhiteSpace(NewWinText))
+        try
         {
-            return;
+            if (string.IsNullOrWhiteSpace(NewWinText))
+            {
+                return;
+            }
+
+            var win = new WinEntry
+            {
+                Text = NewWinText.Trim()
+            };
+
+            await _winService.AddWinAsync(win);
+
+            NewWinText = string.Empty;
+
+            StatusMessage = "Win saved.";
+            await Task.Delay(2000);
+            StatusMessage = string.Empty;
+
+            await LoadWinsAsync();
+            UpdateFlowMessage();
         }
-
-        var win = new WinEntry
+        catch (Exception ex)
         {
-            Text = NewWinText.Trim()
-        };
-
-        await _winService.AddWinAsync(win);
-
-        NewWinText = string.Empty;
-
-        StatusMessage = "Win saved.";
-        await Task.Delay(2000);
-        StatusMessage = string.Empty;
-
-        await LoadWinsAsync();
-        UpdateFlowMessage();
-    }
-
-    public async Task LoadWinsAsync()
-    {
-        var wins = await _winService.GetRecentWinsAsync();
-
-        RecentWins.Clear();
-
-        foreach (var win in wins.Take(5))
-        {
-            RecentWins.Add(win);
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] AddWin failed: {ex}");
+            StatusMessage = "Could not save win.";
         }
-    }
-    public async Task LoadTruthBombAsync()
-    {
-        var bomb = await _truthBombService.GetTruthBombAsync();
-        TruthBombText = bomb.Text;
     }
 
     [RelayCommand]
     private async Task CompleteTask(TaskItem task)
     {
-        if (task is null)
-            return;
+        try
+        {
+            if (task is null)
+                return;
 
-        task.IsCompleted = true;
+            task.IsCompleted = true;
 
-        await _taskService.CompleteTaskAsync(task.Id);
+            await _taskService.CompleteTaskAsync(task.Id);
 
-        StatusMessage = "Nice — task completed.";
+            StatusMessage = "Nice — task completed.";
 
-        await LoadTasksAsync();
-        UpdateFlowMessage();
+            await LoadTasksAsync();
+            UpdateFlowMessage();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] CompleteTask failed: {ex}");
+            StatusMessage = "Could not complete task.";
+        }
     }
+
     public async Task LoadTasksAsync()
     {
-        var tasks = await _taskService.GetAllTasksAsync();
-
-        System.Diagnostics.Debug.WriteLine("---- TASKS LOADED ----");
-
-        foreach (var t in tasks)
+        try
         {
-            System.Diagnostics.Debug.WriteLine(
-                $"Id={t.Id}, Title={t.Title}, IsCompleted={t.IsCompleted}, CreatedUtc={t.CreatedUtc}, CompletedUtc={t.CompletedUtc}");
+            var tasks = await _taskService.GetAllTasksAsync();
+
+            Tasks.Clear();
+
+            foreach (var task in tasks.OrderBy(t => t.IsCompleted).ThenBy(t => t.CreatedUtc))
+            {
+                if (task.ReminderDateTime.HasValue)
+                {
+                    task.ReminderDate = task.ReminderDateTime.Value.Date;
+                    task.ReminderTime = task.ReminderDateTime.Value.TimeOfDay;
+                }
+
+                Tasks.Add(task);
+            }
         }
-
-        Tasks.Clear();
-
-        foreach (var task in tasks.OrderBy(t => t.IsCompleted).ThenBy(t => t.CreatedUtc))
+        catch (Exception ex)
         {
-            Tasks.Add(task);
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] LoadTasksAsync failed: {ex}");
+            StatusMessage = "Could not load tasks.";
         }
     }
+
+    public async Task LoadWinsAsync()
+    {
+        try
+        {
+            var wins = await _winService.GetRecentWinsAsync();
+
+            RecentWins.Clear();
+
+            foreach (var win in wins.Take(5))
+            {
+                RecentWins.Add(win);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] LoadWinsAsync failed: {ex}");
+        }
+    }
+
+    public async Task LoadTruthBombAsync()
+    {
+        try
+        {
+            var bomb = await _truthBombService.GetTruthBombAsync();
+            TruthBombText = bomb.Text;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] LoadTruthBombAsync failed: {ex}");
+        }
+    }
+
+    public async Task LoadLatestCheckInAsync()
+    {
+        try
+        {
+            var latestCheckIn = await _checkInService.GetLatestCheckInAsync();
+
+            if (latestCheckIn is null)
+                return;
+
+            Mood = latestCheckIn.Mood;
+            EnergyLevel = latestCheckIn.EnergyLevel;
+            FocusLevel = latestCheckIn.FocusLevel;
+            Note = latestCheckIn.Note;
+
+            GenerateNextStepSuggestion();
+
+            var timeSince = DateTime.UtcNow - latestCheckIn.TimestampUtc;
+
+            if (timeSince.TotalHours < 12)
+            {
+                CheckInPrompt = $"Earlier you felt {latestCheckIn.Mood}. How are you feeling now?";
+            }
+            else
+            {
+                CheckInPrompt = $"Last time you checked in, you felt {latestCheckIn.Mood}. How are things today?";
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] LoadLatestCheckInAsync failed: {ex}");
+        }
+    }
+
     private async Task LoadGreetingAsync()
     {
-        var profile = await _profileService.GetProfileAsync();
+        try
+        {
+            var profile = await _profileService.GetProfileAsync();
 
-        if (profile is not null && !string.IsNullOrWhiteSpace(profile.Nickname))
-        {
-            GreetingText = $"Welcome {profile.Nickname}";
+            if (profile is not null && !string.IsNullOrWhiteSpace(profile.Nickname))
+            {
+                GreetingText = $"Welcome {profile.Nickname}";
+            }
+            else
+            {
+                GreetingText = "Welcome";
+            }
         }
-        else
+        catch (Exception ex)
         {
-            GreetingText = "Welcome";
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] LoadGreetingAsync failed: {ex}");
         }
     }
 
@@ -250,32 +444,7 @@ public partial class TodayViewModel : BaseViewModel
             NextStepSuggestion = "Make a small step forward. Progress over perfection.";
         }
     }
-    public async Task LoadLatestCheckInAsync()
-    {
-        var latestCheckIn = await _checkInService.GetLatestCheckInAsync();
 
-        if (latestCheckIn is null)
-            return;
-
-        Mood = latestCheckIn.Mood;
-        EnergyLevel = latestCheckIn.EnergyLevel;
-        FocusLevel = latestCheckIn.FocusLevel;
-        Note = latestCheckIn.Note;
-
-        GenerateNextStepSuggestion();
-
-        // 👇 NEW BIT
-        var timeSince = DateTime.UtcNow - latestCheckIn.TimestampUtc;
-
-        if (timeSince.TotalHours < 12)
-        {
-            CheckInPrompt = $"Earlier you felt {latestCheckIn.Mood}. How are you feeling now?";
-        }
-        else
-        {
-            CheckInPrompt = $"Last time you checked in, you felt {latestCheckIn.Mood}. How are things today?";
-        }
-    }
     private void UpdateFlowMessage()
     {
         if (string.IsNullOrWhiteSpace(Mood))

@@ -3,37 +3,40 @@
     x:Class="ADHDCompanionApp.Views.TodayPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Today"
-    BackgroundColor="#121212">
+    Title="Today">
+    
+    <ContentPage.ToolbarItems>
+        <ToolbarItem
+        IconImageSource="gear.svg"
+        Order="Primary"
+        Priority="0"
+        Clicked="OnPreferencesClicked" />
+    </ContentPage.ToolbarItems>
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="12">
 
             <Label
                 Text="{Binding GreetingText}"
-                TextColor="White"
                 FontSize="28"
-                FontAttributes="Bold" />
-
-           <!-- <Button
-                Text="Preferences"
-                Clicked="OnPreferencesClicked"
-                Style="{StaticResource PrimaryButtonStyle}" /> -->
+                FontAttributes="Bold"
+                TextColor="{StaticResource TextPrimary}" />
 
             <Label
                 Text="{Binding FlowMessage}"
                 FontSize="16"
                 Opacity="0.8"
-                TextColor="White"/>
+                TextColor="{StaticResource TextSecondary}" />
 
             <Label
                 Text="Truth Bomb"
-                Style="{StaticResource SectionTitleStyle}"/>
+                Style="{StaticResource SectionTitleStyle}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
                 <Label
                     Text="{Binding TruthBombText}"
-                    FontSize="16" />
+                    FontSize="16"
+                    TextColor="{StaticResource TextPrimary}" />
             </Frame>
 
             <Label
@@ -47,26 +50,37 @@
                         Placeholder="Mood (for example: good, low, anxious)"
                         Text="{Binding Mood}" />
 
-                    <Label Text="Energy" />
+                    <Label
+                        Text="Energy"
+                        TextColor="{StaticResource TextPrimary}" />
+
                     <Slider
                         Minimum="1"
                         Maximum="5"
                         Value="{Binding EnergyLevel}"
-                        MinimumTrackColor="#B3CF99"
-                        MaximumTrackColor="Grey"
-                        ThumbColor="#B3CF99"
-                        />
-                    <Label Text="{Binding EnergyLevel}" />
+                        MinimumTrackColor="{StaticResource Primary}"
+                        MaximumTrackColor="{StaticResource BorderColor}"
+                        ThumbColor="{StaticResource Primary}" />
 
-                    <Label Text="Focus" />
+                    <Label
+                        Text="{Binding EnergyLevel}"
+                        TextColor="{StaticResource TextSecondary}" />
+
+                    <Label
+                        Text="Focus"
+                        TextColor="{StaticResource TextPrimary}" />
+
                     <Slider
                         Minimum="1"
                         Maximum="5"
                         Value="{Binding FocusLevel}"
-                        MinimumTrackColor="#B3CF99"
-                        MaximumTrackColor="Grey"
-                        ThumbColor="#B3CF99"/>
-                    <Label Text="{Binding FocusLevel}" />
+                        MinimumTrackColor="{StaticResource Primary}"
+                        MaximumTrackColor="{StaticResource BorderColor}"
+                        ThumbColor="{StaticResource Primary}" />
+
+                    <Label
+                        Text="{Binding FocusLevel}"
+                        TextColor="{StaticResource TextSecondary}" />
 
                     <Editor
                         Placeholder="Optional note"
@@ -77,10 +91,11 @@
                         Text="Save check-in"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Command="{Binding SaveCheckInCommand}" />
+
                     <Label 
                         Text="{Binding CheckInPrompt}" 
                         FontSize="16"
-                        TextColor="LightBlue"
+                        TextColor="{StaticResource InfoColor}"
                         HorizontalOptions="Center"
                         Margin="0,10,0,10" />
 
@@ -92,13 +107,14 @@
                 Style="{StaticResource SectionTitleStyle}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
-                <Label Text="{Binding NextStepSuggestion}" />
+                <Label
+                    Text="{Binding NextStepSuggestion}"
+                    TextColor="{StaticResource TextPrimary}" />
             </Frame>
 
             <Label
                 Text="Tasks"
-                Style="{StaticResource SectionTitleStyle}"
-                BackgroundColor="#1E1E1E"/>
+                Style="{StaticResource SectionTitleStyle}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
                 <VerticalStackLayout Spacing="12">
@@ -113,66 +129,169 @@
                         Command="{Binding AddTaskCommand}" />
 
                     <Label 
-                        Text="{Binding StatusMessage}" 
-                        TextColor="LightGreen"
-                        FontSize="14"
+                        Text="{Binding StatusMessage}"
+                        Style="{StaticResource StatusMessageStyle}"
                         HorizontalOptions="Center"
-                        Margin="0,10,0,0"/>
+                        Margin="0,10,0,0" />
 
                     <CollectionView ItemsSource="{Binding Tasks}">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <Frame Padding="12" Margin="0,6,0,0">
-                                    <Frame.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToggleTaskCommand}"
-                                            CommandParameter="{Binding .}" />
-                                    </Frame.GestureRecognizers>
+                                <Frame
+                                    Padding="12"
+                                    Margin="0,6,0,0"
+                                    BackgroundColor="{StaticResource SurfaceColor}"
+                                    BorderColor="{StaticResource BorderColor}"
+                                    HasShadow="False">
 
-                                    <HorizontalStackLayout Spacing="12">
+                                    <VerticalStackLayout Spacing="6">
+
+                                        <Grid ColumnDefinitions="*,Auto">
+
+                                            <Label
+                                                Grid.Column="0"
+                                                Text="Tap to complete"
+                                                FontSize="11"
+                                                TextColor="{StaticResource TextSecondary}"
+                                                Opacity="0.8"
+                                                HorizontalOptions="Start">
+
+                                                <Label.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToggleTaskCommand}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Label.GestureRecognizers>
+
+                                                <Label.Triggers>
+                                                    <DataTrigger
+                                                        TargetType="Label"
+                                                        Binding="{Binding IsCompleted}"
+                                                        Value="True">
+                                                        <Setter Property="Text" Value="Completed" />
+                                                    </DataTrigger>
+
+                                                    <DataTrigger
+                                                        TargetType="Label"
+                                                        Binding="{Binding IsCompleted}"
+                                                        Value="True">
+                                                        <Setter Property="Opacity" Value="0.6" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+
+                                            </Label>
+
+                                            <Label
+                                                Grid.Column="1"
+                                                Text="Set reminder"
+                                                FontSize="11"
+                                                TextColor="{StaticResource TextMuted}"
+                                                HorizontalOptions="End">
+
+                                                <Label.Triggers>
+                                                    <DataTrigger
+                                                        TargetType="Label"
+                                                        Binding="{Binding IsCompleted}"
+                                                        Value="True">
+                                                        <Setter Property="IsVisible" Value="False" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+                                            </Label>
+
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+
+                                            <Label
+                                                Grid.Column="0"
+                                                Text="{Binding Title}"
+                                                TextColor="{StaticResource TextPrimary}"
+                                                FontSize="16"
+                                                VerticalOptions="Center"
+                                                LineBreakMode="WordWrap">
+
+                                                <Label.Triggers>
+                                                    <DataTrigger
+                                                        TargetType="Label"
+                                                        Binding="{Binding IsCompleted}"
+                                                        Value="True">
+                                                        <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                        <Setter Property="Opacity" Value="0.6" />
+                                                    </DataTrigger>
+                                                </Label.Triggers>
+
+                                            </Label>
+
+                                            <Switch
+                                                Grid.Column="1"
+                                                IsToggled="{Binding ReminderEnabled}"
+                                                VerticalOptions="Center"
+                                                OnColor="{StaticResource Primary}">
+
+                                                <Switch.Triggers>
+                                                    <DataTrigger
+                                                        TargetType="Switch"
+                                                        Binding="{Binding IsCompleted}"
+                                                        Value="True">
+                                                        <Setter Property="IsVisible" Value="False" />
+                                                    </DataTrigger>
+                                                </Switch.Triggers>
+
+                                                <Switch.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToggleTaskReminderCommand}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Switch.GestureRecognizers>
+                                            </Switch>
+
+                                        </Grid>
 
                                         <Label
-                                            Text="{Binding Title}"
-                                            VerticalOptions="Center"
-                                            HorizontalOptions="StartAndExpand">
-
-                                            <Label.Triggers>
-                                                <DataTrigger
-                                                    TargetType="Label"
-                                                    Binding="{Binding IsCompleted}"
-                                                    Value="True">
-                                                    <Setter Property="TextDecorations" Value="Strikethrough" />
-                                                    <Setter Property="Opacity" Value="0.6" />
-                                                </DataTrigger>
-                                            </Label.Triggers>
-
-                                        </Label>
-
-                                        <Label
-                                            Text="Tap to complete"
                                             FontSize="12"
-                                            VerticalOptions="Center"
-                                            Opacity="0.6">
+                                            TextColor="{StaticResource TextMuted}"
+                                            Text="{Binding ReminderDateTime, StringFormat='Reminder: {0:dd MMM yyyy HH:mm}'}">
 
                                             <Label.Triggers>
                                                 <DataTrigger
                                                     TargetType="Label"
                                                     Binding="{Binding IsCompleted}"
                                                     Value="True">
-                                                    <Setter Property="Text" Value="Completed" />
+                                                    <Setter Property="IsVisible" Value="False" />
                                                 </DataTrigger>
 
                                                 <DataTrigger
                                                     TargetType="Label"
-                                                    Binding="{Binding IsCompleted}"
-                                                    Value="True">
-                                                    <Setter Property="Opacity" Value="0.6" />
+                                                    Binding="{Binding ReminderEnabled}"
+                                                    Value="False">
+                                                    <Setter Property="IsVisible" Value="False" />
                                                 </DataTrigger>
                                             </Label.Triggers>
-
                                         </Label>
 
-                                    </HorizontalStackLayout>
+                                        <VerticalStackLayout
+                                            Spacing="6"
+                                            IsVisible="{Binding IsEditingReminder}">
+
+                                            <VerticalStackLayout.Triggers>
+                                                <DataTrigger
+                                                    TargetType="VerticalStackLayout"
+                                                    Binding="{Binding IsCompleted}"
+                                                    Value="True">
+                                                    <Setter Property="IsVisible" Value="False" />
+                                                </DataTrigger>
+                                            </VerticalStackLayout.Triggers>
+
+                                            <DatePicker Date="{Binding ReminderDate}" />
+                                            <TimePicker Time="{Binding ReminderTime}" />
+
+                                            <Button
+                                                Text="Save reminder"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SaveTaskReminderCommand}"
+                                                CommandParameter="{Binding .}" />
+
+                                        </VerticalStackLayout>
+
+                                    </VerticalStackLayout>
                                 </Frame>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
@@ -201,18 +320,27 @@
                     <Label
                         Text="Recent Wins"
                         FontAttributes="Bold"
-                        Margin="0,8,0,0" />
+                        Margin="0,8,0,0"
+                        TextColor="{StaticResource TextPrimary}" />
 
                     <CollectionView ItemsSource="{Binding RecentWins}">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <Frame Padding="12" Margin="0,6,0,0">
+                                <Frame
+                                    Padding="12"
+                                    Margin="0,6,0,0"
+                                    BackgroundColor="{StaticResource SurfaceColor}"
+                                    BorderColor="{StaticResource BorderColor}"
+                                    HasShadow="False">
                                     <VerticalStackLayout Spacing="4">
-                                        <Label Text="{Binding Text}" />
+                                        <Label
+                                            Text="{Binding Text}"
+                                            TextColor="{StaticResource TextPrimary}" />
                                         <Label
                                             Text="{Binding TimestampUtc, StringFormat='Saved: {0:dd MMM yyyy HH:mm}'}"
                                             FontSize="12"
-                                            Opacity="0.6" />
+                                            TextColor="{StaticResource TextMuted}"
+                                            Opacity="0.8" />
                                     </VerticalStackLayout>
                                 </Frame>
                             </DataTemplate>
@@ -224,8 +352,8 @@
 
             <Label
                 Text="{Binding StatusMessage}"
-                FontSize="14"
-                Opacity="0.7"
+                Style="{StaticResource StatusMessageStyle}"
+                Opacity="0.9"
                 Margin="0,8,0,16" />
 
         </VerticalStackLayout>

@@ -15,38 +15,53 @@ public class AndroidReminderScheduler : IPlatformReminderScheduler
     private const string ChannelId = "reminders";
     private const string ChannelName = "Reminders";
     private const string ReminderAction = "ADHDCOMPANIONAPP_REMINDER";
-    private const string LogTag = "MedicationReminder";
+    private const string LogTag = "AppReminder";
 
     public Task<bool> CanScheduleExactRemindersAsync()
     {
-        var context = Application.Context;
-        var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
+        try
+        {
+            var context = Application.Context;
+            var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
 
-        if (alarmManager is null)
+            if (alarmManager is null)
+                return Task.FromResult(false);
+
+            if (Build.VERSION.SdkInt < BuildVersionCodes.S)
+                return Task.FromResult(true);
+
+            return Task.FromResult(alarmManager.CanScheduleExactAlarms());
+        }
+        catch (Exception ex)
+        {
+            Log.Error(LogTag, $"CanScheduleExactRemindersAsync failed: {ex}");
             return Task.FromResult(false);
-
-        if (Build.VERSION.SdkInt < BuildVersionCodes.S)
-            return Task.FromResult(true);
-
-        return Task.FromResult(alarmManager.CanScheduleExactAlarms());
+        }
     }
 
     public Task OpenExactReminderSettingsAsync()
     {
-        if (Build.VERSION.SdkInt < BuildVersionCodes.S)
+        try
+        {
+            if (Build.VERSION.SdkInt < BuildVersionCodes.S)
+                return Task.CompletedTask;
+
+            var context = Application.Context;
+
+            var intent = new Intent(Settings.ActionRequestScheduleExactAlarm);
+            intent.SetData(global::Android.Net.Uri.Parse($"package:{context.PackageName}"));
+            intent.SetFlags(ActivityFlags.NewTask);
+
+            context.StartActivity(intent);
+
+            Log.Debug(LogTag, "Opened exact reminder settings.");
             return Task.CompletedTask;
-
-        var context = Application.Context;
-
-        var intent = new Intent(Settings.ActionRequestScheduleExactAlarm);
-        intent.SetData(global::Android.Net.Uri.Parse($"package:{context.PackageName}"));
-        intent.SetFlags(ActivityFlags.NewTask);
-
-        context.StartActivity(intent);
-
-        Log.Debug(LogTag, "Opened exact reminder settings.");
-
-        return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(LogTag, $"OpenExactReminderSettingsAsync failed: {ex}");
+            return Task.CompletedTask;
+        }
     }
 
     public async Task ScheduleAsync(ReminderRequest request)
@@ -145,7 +160,6 @@ public class AndroidReminderScheduler : IPlatformReminderScheduler
             pendingIntent.Cancel();
 
             Log.Debug(LogTag, $"Alarm cancelled for '{reminderKey}'.");
-
             return Task.CompletedTask;
         }
         catch (Exception ex)
@@ -157,38 +171,45 @@ public class AndroidReminderScheduler : IPlatformReminderScheduler
 
     public static void ShowNotification(Context context, ReminderRequest request)
     {
-        CreateNotificationChannel();
-
-        PendingIntent? contentIntent = null;
-        var launchIntent = context.PackageManager?.GetLaunchIntentForPackage(context.PackageName);
-
-        if (launchIntent is not null)
+        try
         {
-            var flags = PendingIntentFlags.UpdateCurrent;
+            CreateNotificationChannel();
 
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
+            PendingIntent? contentIntent = null;
+            var launchIntent = context.PackageManager?.GetLaunchIntentForPackage(context.PackageName);
+
+            if (launchIntent is not null)
             {
-                flags |= PendingIntentFlags.Immutable;
+                var flags = PendingIntentFlags.UpdateCurrent;
+
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
+                {
+                    flags |= PendingIntentFlags.Immutable;
+                }
+
+                contentIntent = PendingIntent.GetActivity(context, 0, launchIntent, flags);
             }
 
-            contentIntent = PendingIntent.GetActivity(context, 0, launchIntent, flags);
+            var builder = new NotificationCompat.Builder(context, ChannelId)
+                .SetSmallIcon(global::Android.Resource.Drawable.IcDialogInfo)
+                .SetContentTitle(request.Title)
+                .SetContentText(request.Message)
+                .SetAutoCancel(true)
+                .SetPriority((int)NotificationPriority.High);
+
+            if (contentIntent is not null)
+            {
+                builder.SetContentIntent(contentIntent);
+            }
+
+            NotificationManagerCompat.From(context).Notify(request.NotificationId, builder.Build());
+
+            Log.Debug(LogTag, $"Notification displayed. Id={request.NotificationId}, Title={request.Title}");
         }
-
-        var builder = new NotificationCompat.Builder(context, ChannelId)
-            .SetSmallIcon(global::Android.Resource.Drawable.IcDialogInfo)
-            .SetContentTitle(request.Title)
-            .SetContentText(request.Message)
-            .SetAutoCancel(true)
-            .SetPriority((int)NotificationPriority.High);
-
-        if (contentIntent is not null)
+        catch (Exception ex)
         {
-            builder.SetContentIntent(contentIntent);
+            Log.Error(LogTag, $"ShowNotification failed: {ex}");
         }
-
-        NotificationManagerCompat.From(context).Notify(request.NotificationId, builder.Build());
-
-        Log.Debug(LogTag, $"Notification displayed. Id={request.NotificationId}, Title={request.Title}");
     }
 
     public static ReminderRequest? BuildRequestFromIntent(Intent intent)
@@ -251,28 +272,42 @@ public class AndroidReminderScheduler : IPlatformReminderScheduler
 
     private static Task<bool> CanScheduleExactRemindersInternalAsync(AlarmManager alarmManager)
     {
-        if (Build.VERSION.SdkInt < BuildVersionCodes.S)
-            return Task.FromResult(true);
+        try
+        {
+            if (Build.VERSION.SdkInt < BuildVersionCodes.S)
+                return Task.FromResult(true);
 
-        return Task.FromResult(alarmManager.CanScheduleExactAlarms());
+            return Task.FromResult(alarmManager.CanScheduleExactAlarms());
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
     }
 
     private static void CreateNotificationChannel()
     {
-        if (Build.VERSION.SdkInt < BuildVersionCodes.O)
-            return;
-
-        var context = Application.Context;
-        var notificationManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
-
-        if (notificationManager is null)
-            return;
-
-        var channel = new NotificationChannel(ChannelId, ChannelName, NotificationImportance.High)
+        try
         {
-            Description = "App reminders"
-        };
+            if (Build.VERSION.SdkInt < BuildVersionCodes.O)
+                return;
 
-        notificationManager.CreateNotificationChannel(channel);
+            var context = Application.Context;
+            var notificationManager = context.GetSystemService(Context.NotificationService) as NotificationManager;
+
+            if (notificationManager is null)
+                return;
+
+            var channel = new NotificationChannel(ChannelId, ChannelName, NotificationImportance.High)
+            {
+                Description = "App reminders"
+            };
+
+            notificationManager.CreateNotificationChannel(channel);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(LogTag, $"CreateNotificationChannel failed: {ex}");
+        }
     }
 }

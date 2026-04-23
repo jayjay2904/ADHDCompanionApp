@@ -13,20 +13,20 @@ namespace ADHDCompanionApp.Platforms.Android.Services;
 })]
 public class BootReceiver : BroadcastReceiver
 {
-    private const string LogTag = "ReminderEngine";
+    private const string LogTag = "AppReminder";
 
     public override async void OnReceive(Context? context, Intent? intent)
     {
-        Log.Debug(LogTag, $"BootReceiver fired. Action={intent?.Action}");
-
-        if (context is null || intent is null)
-        {
-            Log.Warn(LogTag, "BootReceiver aborted: context or intent null.");
-            return;
-        }
-
         try
         {
+            Log.Debug(LogTag, $"BootReceiver fired. Action={intent?.Action}");
+
+            if (context is null || intent is null)
+            {
+                Log.Warn(LogTag, "BootReceiver aborted: context or intent null.");
+                return;
+            }
+
             var services = IPlatformApplication.Current?.Services;
 
             if (services is null)

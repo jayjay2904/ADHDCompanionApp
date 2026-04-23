@@ -36,4 +36,8 @@ public partial class ArloPage : ContentPage
             await MessagesScrollView.ScrollToAsync(0, MessagesStack.Height, true);
         });
     }
+    private async void OnPreferencesClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(PreferencesPage));
+    }
 }

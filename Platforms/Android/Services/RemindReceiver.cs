@@ -8,20 +8,20 @@ namespace ADHDCompanionApp.Platforms.Android.Services;
 [BroadcastReceiver(Enabled = true, Exported = false)]
 public class ReminderReceiver : BroadcastReceiver
 {
-    private const string LogTag = "MedicationReminder";
+    private const string LogTag = "AppReminder";
 
     public override async void OnReceive(Context? context, Intent? intent)
     {
-        Log.Debug(LogTag, "ReminderReceiver fired.");
-
-        if (context is null || intent is null)
-        {
-            Log.Warn(LogTag, "ReminderReceiver exited because context or intent was null.");
-            return;
-        }
-
         try
         {
+            Log.Debug(LogTag, "ReminderReceiver fired.");
+
+            if (context is null || intent is null)
+            {
+                Log.Warn(LogTag, "ReminderReceiver exited because context or intent was null.");
+                return;
+            }
+
             var request = AndroidReminderScheduler.BuildRequestFromIntent(intent);
 
             if (request is null)

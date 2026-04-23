@@ -1,4 +1,3 @@
-using Android.Util;
 using ADHDCompanionApp.Models;
 using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.Services.Interfaces;
@@ -7,10 +6,11 @@ namespace ADHDCompanionApp.Services;
 
 public class ReminderEngine : IReminderEngine
 {
-    private const string LogTag = "ReminderEngine";
+    private const string LogTag = "AppReminder";
 
     private readonly IPlatformReminderScheduler _platformReminderScheduler;
     private readonly IUserProfileService _userProfileService;
+
 
     public ReminderEngine(
         IPlatformReminderScheduler platformReminderScheduler,
@@ -20,117 +20,169 @@ public class ReminderEngine : IReminderEngine
         _userProfileService = userProfileService;
     }
 
-    public Task<bool> CanScheduleExactRemindersAsync()
+    public async Task<bool> CanScheduleExactRemindersAsync()
     {
-        return _platformReminderScheduler.CanScheduleExactRemindersAsync();
+        try
+        {
+            return await _platformReminderScheduler.CanScheduleExactRemindersAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"CanScheduleExactRemindersAsync failed: {ex}");
+            return false;
+        }
     }
 
-    public Task OpenExactReminderSettingsAsync()
+    public async Task OpenExactReminderSettingsAsync()
     {
-        return _platformReminderScheduler.OpenExactReminderSettingsAsync();
+        try
+        {
+            await _platformReminderScheduler.OpenExactReminderSettingsAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"OpenExactReminderSettingsAsync failed: {ex}");
+        }
     }
 
-    public Task ScheduleReminderAsync(ReminderRequest request)
+    public async Task ScheduleReminderAsync(ReminderRequest request)
     {
-        return _platformReminderScheduler.ScheduleAsync(request);
+        try
+        {
+            await _platformReminderScheduler.ScheduleAsync(request);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ScheduleReminderAsync failed for '{request.ReminderKey}': {ex}");
+        }
     }
 
-    public Task CancelReminderAsync(string reminderKey, int notificationId)
+    public async Task CancelReminderAsync(string reminderKey, int notificationId)
     {
-        return _platformReminderScheduler.CancelAsync(reminderKey, notificationId);
+        try
+        {
+            await _platformReminderScheduler.CancelAsync(reminderKey, notificationId);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"CancelReminderAsync failed for '{reminderKey}': {ex}");
+        }
     }
 
     public async Task ScheduleMedicationReminderAsync(UserProfile profile)
     {
-        if (!profile.UsesMedicationSupport ||
-            !profile.MedicationReminderTime.HasValue ||
-            !profile.MedicationStartDate.HasValue)
+        try
         {
-            Log.Debug(LogTag, "Medication reminder skipped because support is disabled or incomplete.");
+            if (!profile.UsesMedicationSupport ||
+                !profile.MedicationReminderTime.HasValue ||
+                !profile.MedicationStartDate.HasValue)
+            {
+                
+                await CancelMedicationReminderAsync();
+                return;
+            }
+
+            var reminderTime = profile.MedicationReminderTime.Value;
+            var nextTrigger = GetNextTriggerTime(DateTime.Now, profile.MedicationStartDate.Value, reminderTime);
+
+            var request = new ReminderRequest
+            {
+                ReminderKey = ReminderConstants.MedicationReminderKey,
+                NotificationId = ReminderConstants.MedicationNotificationId,
+                Type = ReminderType.Medication,
+                Title = "Medication reminder",
+                Message = string.IsNullOrWhiteSpace(profile.Nickname)
+                    ? "Time to take your medication."
+                    : $"{profile.Nickname}, time to take your medication.",
+                TriggerTime = nextTrigger,
+                RepeatTimeOfDay = reminderTime,
+                UserName = profile.Nickname
+            };
+
             await CancelMedicationReminderAsync();
-            return;
+            await ScheduleReminderAsync(request);
         }
-
-        var reminderTime = profile.MedicationReminderTime.Value;
-        var nextTrigger = GetNextTriggerTime(DateTime.Now, profile.MedicationStartDate.Value, reminderTime);
-
-        var request = new ReminderRequest
+        catch (Exception ex)
         {
-            ReminderKey = ReminderConstants.MedicationReminderKey,
-            NotificationId = ReminderConstants.MedicationNotificationId,
-            Type = ReminderType.Medication,
-            Title = "Medication reminder",
-            Message = string.IsNullOrWhiteSpace(profile.Nickname)
-                ? "Time to take your medication."
-                : $"{profile.Nickname}, time to take your medication.",
-            TriggerTime = nextTrigger,
-            RepeatTimeOfDay = reminderTime,
-            UserName = profile.Nickname
-        };
-
-        Log.Debug(LogTag, $"Scheduling medication reminder for {request.TriggerTime:yyyy-MM-dd HH:mm:ss}");
-
-        await CancelMedicationReminderAsync();
-        await ScheduleReminderAsync(request);
+            System.Diagnostics.Debug.WriteLine($"ScheduleMedicationReminderAsync failed: {ex}");
+        }
     }
 
-    public Task CancelMedicationReminderAsync()
+    public async Task CancelMedicationReminderAsync()
     {
-        return CancelReminderAsync(
-            ReminderConstants.MedicationReminderKey,
-            ReminderConstants.MedicationNotificationId);
+        try
+        {
+            await CancelReminderAsync(
+                ReminderConstants.MedicationReminderKey,
+                ReminderConstants.MedicationNotificationId);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"CancelMedicationReminderAsync failed: {ex}");
+        }
     }
 
     public async Task RestoreRemindersAsync()
     {
-        var profile = await _userProfileService.GetProfileAsync();
+        try
+        {
+            var profile = await _userProfileService.GetProfileAsync();
 
-        if (profile is null)
-        {
-            Log.Debug(LogTag, "Restore skipped because profile is null.");
-            return;
-        }
+            if (profile is null)
+            {
+                 return;
+            }
 
-        if (profile.UsesMedicationSupport &&
-            profile.MedicationReminderTime.HasValue &&
-            profile.MedicationStartDate.HasValue)
-        {
-            Log.Debug(LogTag, "Restoring medication reminder.");
-            await ScheduleMedicationReminderAsync(profile);
+            if (profile.UsesMedicationSupport &&
+                profile.MedicationReminderTime.HasValue &&
+                profile.MedicationStartDate.HasValue)
+            {
+                await ScheduleMedicationReminderAsync(profile);
+            }
+            else
+            {
+               await CancelMedicationReminderAsync();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Log.Debug(LogTag, "No medication reminder to restore.");
-            await CancelMedicationReminderAsync();
+            System.Diagnostics.Debug.WriteLine($"RestoreRemindersAsync failed: {ex}");
         }
     }
 
     public async Task HandleTriggeredReminderAsync(ReminderRequest request)
     {
-        if (!request.RepeatTimeOfDay.HasValue)
+        try
         {
-            Log.Debug(LogTag, $"Reminder '{request.ReminderKey}' does not repeat.");
-            return;
+            if (!request.RepeatTimeOfDay.HasValue)
+            {
+                
+                return;
+            }
+
+            var nextTrigger = DateTime.Today.AddDays(1).Add(request.RepeatTimeOfDay.Value);
+
+            var nextRequest = new ReminderRequest
+            {
+                ReminderKey = request.ReminderKey,
+                NotificationId = request.NotificationId,
+                Type = request.Type,
+                Title = request.Title,
+                Message = request.Message,
+                TriggerTime = nextTrigger,
+                RepeatTimeOfDay = request.RepeatTimeOfDay,
+                UserName = request.UserName,
+                Metadata = new Dictionary<string, string>(request.Metadata)
+            };
+
+            
+
+            await ScheduleReminderAsync(nextRequest);
         }
-
-        var nextTrigger = DateTime.Today.AddDays(1).Add(request.RepeatTimeOfDay.Value);
-
-        var nextRequest = new ReminderRequest
+        catch (Exception ex)
         {
-            ReminderKey = request.ReminderKey,
-            NotificationId = request.NotificationId,
-            Type = request.Type,
-            Title = request.Title,
-            Message = request.Message,
-            TriggerTime = nextTrigger,
-            RepeatTimeOfDay = request.RepeatTimeOfDay,
-            UserName = request.UserName,
-            Metadata = new Dictionary<string, string>(request.Metadata)
-        };
-
-        Log.Debug(LogTag, $"Rescheduling reminder '{request.ReminderKey}' for {nextTrigger:yyyy-MM-dd HH:mm:ss}");
-
-        await ScheduleReminderAsync(nextRequest);
+            System.Diagnostics.Debug.WriteLine($"HandleTriggeredReminderAsync failed for '{request.ReminderKey}': {ex}");
+        }
     }
 
     private static DateTime GetNextTriggerTime(DateTime now, DateTime startDate, TimeSpan reminderTime)
@@ -151,5 +203,61 @@ public class ReminderEngine : IReminderEngine
         }
 
         return nextTrigger;
+    }
+    public async Task ScheduleTaskReminderAsync(TaskItem task)
+    {
+        try
+        {
+            if (task is null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(task.Id))
+                return;
+
+            if (task.IsCompleted || !task.ReminderEnabled || !task.ReminderDateTime.HasValue)
+            {
+                await CancelTaskReminderAsync(task);
+                return;
+            }
+
+            var reminderKey = ReminderConstants.GetTaskReminderKey(task.Id);
+            var notificationId = ReminderConstants.GetTaskNotificationId(task.Id);
+
+            var request = new ReminderRequest
+            {
+                ReminderKey = reminderKey,
+                NotificationId = notificationId,
+                Type = ReminderType.Task,
+                Title = "Task reminder",
+                Message = string.IsNullOrWhiteSpace(task.Title)
+                    ? "You set a reminder for a task."
+                    : $"Task reminder: {task.Title}",
+                TriggerTime = task.ReminderDateTime.Value,
+                RepeatTimeOfDay = null
+            };
+
+            await CancelTaskReminderAsync(task);
+            await ScheduleReminderAsync(request);
+        }
+        catch (Exception ex)
+        {
+           System.Diagnostics.Debug.WriteLine($"[ReminderEngine ERROR] ScheduleTaskReminderAsync: {ex}");
+        }
+    }
+    public async Task CancelTaskReminderAsync(TaskItem task)
+    {
+        try
+        {
+            if (task is null || string.IsNullOrWhiteSpace(task.Id))
+                return;
+
+            await CancelReminderAsync(
+                ReminderConstants.GetTaskReminderKey(task.Id),
+                ReminderConstants.GetTaskNotificationId(task.Id));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ReminderEngine ERROR] CancelTaskReminderAsync: {ex}");
+        }
     }
 }
