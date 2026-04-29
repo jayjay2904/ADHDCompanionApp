@@ -16,6 +16,8 @@ public partial class WelcomePage : ContentPage
     {
         base.OnAppearing();
 
+        Shell.SetTabBarIsVisible(this, false);
+
         _profileService ??= Application.Current?
             .Handler?
             .MauiContext?

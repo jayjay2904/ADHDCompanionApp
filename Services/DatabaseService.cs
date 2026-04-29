@@ -12,13 +12,6 @@ public class DatabaseService
         if (_database is not null)
             return;
 
-        var resetDatabase = true;
-
-        if (resetDatabase && File.Exists(Constants.DatabasePath))
-        {
-            File.Delete(Constants.DatabasePath);
-        }
-
         _database = new SQLiteAsyncConnection(Constants.DatabasePath, Constants.Flags);
 
         await _database.CreateTableAsync<TaskItem>();

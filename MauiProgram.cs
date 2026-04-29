@@ -35,6 +35,13 @@ namespace ADHDCompanionApp
             builder.Services.AddSingleton<ISupportService, SupportService>();
             builder.Services.AddSingleton<IArloService, ArloService>();
             builder.Services.AddSingleton<IReminderEngine, ReminderEngine>();
+            builder.Services.AddSingleton(new HttpClient
+            {
+                BaseAddress = new Uri("http://192.168.4.221:5276/"),
+                Timeout = TimeSpan.FromSeconds(10)
+            });
+
+            builder.Services.AddSingleton<IArloAiClient, BackendArloAiClient>();
 
             // Register ViewModels
             builder.Services.AddSingleton<MainViewModel>();

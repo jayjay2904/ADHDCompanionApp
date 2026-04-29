@@ -11,6 +11,18 @@ public partial class SupportPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
         _viewModel = viewModel;
+
+        _viewModel.PropertyChanged += async (_, e) =>
+        {
+            if (e.PropertyName == nameof(SupportViewModel.HasSelectedOption) && _viewModel.HasSelectedOption)
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    await Task.Delay(100);
+                    await SupportScrollView.ScrollToAsync(SupportPlanSection, ScrollToPosition.Start, true);
+                });
+            }
+        };
     }
 
     protected override async void OnAppearing()

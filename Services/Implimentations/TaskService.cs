@@ -34,7 +34,7 @@ public class TaskService : ITaskService
             }
 
             await _databaseService.SaveTaskAsync(task);
-            await _reminderEngine.ScheduleTaskReminderAsync(task);
+           
         }
         catch (Exception ex)
         {
@@ -101,7 +101,7 @@ public class TaskService : ITaskService
                 return;
 
             await _databaseService.SaveTaskAsync(task);
-            await _reminderEngine.ScheduleTaskReminderAsync(task);
+            
         }
         catch (Exception ex)
         {

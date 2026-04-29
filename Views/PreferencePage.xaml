@@ -3,7 +3,8 @@
     x:Class="ADHDCompanionApp.Views.PreferencesPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Preferences">
+    Title="Preferences"
+    Shell.TabBarIsVisible="False">
 
     <ScrollView>
         <VerticalStackLayout Padding="30" Spacing="20">
@@ -12,19 +13,19 @@
                 Text="Preferences"
                 FontSize="28"
                 FontAttributes="Bold"
-                TextColor="{StaticResource TextPrimary}" />
+                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
             <Label
                 Text="Update your name, reminders, and support settings."
                 FontSize="14"
-                TextColor="{StaticResource TextSecondary}" />
+                TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
                 <VerticalStackLayout Spacing="16">
 
                     <Label
                         Text="What should I call you?"
-                        TextColor="{StaticResource TextPrimary}" />
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
                     <Entry
                         Placeholder="Your name or nickname"
@@ -33,7 +34,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label
                             Text="Do you want medication reminders?"
-                            TextColor="{StaticResource TextPrimary}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
                         <Switch
                             IsToggled="{Binding UsesMedicationSupport}"
@@ -47,14 +48,14 @@
 
                         <Label
                             Text="What time would you like your reminder?"
-                            TextColor="{StaticResource TextSecondary}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
                         <TimePicker
                             Time="{Binding ReminderTime}" />
 
                         <Label
                             Text="When should reminders start?"
-                            TextColor="{StaticResource TextSecondary}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
                         <DatePicker
                             Date="{Binding MedicationStartDate}" />
@@ -63,7 +64,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label
                             Text="Do you want task support?"
-                            TextColor="{StaticResource TextPrimary}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
                         <Switch
                             IsToggled="{Binding UsesTaskSupport}"

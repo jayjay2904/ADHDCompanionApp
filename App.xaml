@@ -2,105 +2,143 @@
 <Application
     x:Class="ADHDCompanionApp.App"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:converters="clr-namespace:ADHDCompanionApp.Converters">
 
     <Application.Resources>
         <ResourceDictionary>
 
-            <!-- Core Palette -->
+            <!-- Brand -->
             <Color x:Key="Primary">#B3CF99</Color>
-            <Color x:Key="PrimaryDark">#8FAE7B</Color>
-            <Color x:Key="PrimaryLight">#D4E6C6</Color>
+            <Color x:Key="PrimaryDark">#98B67F</Color>
+            <Color x:Key="PrimaryLight">#D6E4C8</Color>
 
-            <Color x:Key="CoralColor">#FF8A80</Color>
-            <Color x:Key="CoralSoft">#FFB3AB</Color>
+            <!-- Feedback -->
+            <Color x:Key="CoralColor">#D97C73</Color>
+            <Color x:Key="CoralSoft">#E8B4AE</Color>
+            <Color x:Key="InfoColor">#7D9AB5</Color>
+            <Color x:Key="SuccessColor">#7FA36A</Color>
+            <Color x:Key="WarningColor">#C9A95C</Color>
 
-            <Color x:Key="BackgroundColor">#121212</Color>
-            <Color x:Key="CardColor">#1A1F1A</Color>
-            <Color x:Key="SurfaceColor">#222822</Color>
-            <Color x:Key="BorderColor">#2E352E</Color>
+            <!-- Light theme -->
+            <Color x:Key="BackgroundLight">#F2E8D8</Color>
+            <Color x:Key="CardLight">#FFFDF8</Color>
+            <Color x:Key="SurfaceLight">#FFFDF8</Color>
+            <Color x:Key="SurfaceAltLight">#FAF4EA</Color>
+            <Color x:Key="BorderLight">#E8DECD</Color>
 
-            <Color x:Key="TextPrimary">#FFFFFF</Color>
-            <Color x:Key="TextSecondary">#B8C2B8</Color>
-            <Color x:Key="TextMuted">#7F8A7F</Color>
+            <Color x:Key="TextPrimaryLight">#2E2E2E</Color>
+            <Color x:Key="TextSecondaryLight">#6B6B6B</Color>
+            <Color x:Key="TextMutedLight">#9A948A</Color>
 
-            <Color x:Key="InfoColor">#7FA7D8</Color>
-            <Color x:Key="SuccessColor">#9CCC8A</Color>
-            <Color x:Key="WarningColor">#E6C777</Color>
+            <!-- Dark theme -->
+            <Color x:Key="BackgroundDark">#2A241D</Color>
+            <Color x:Key="CardDark">#342D25</Color>
+            <Color x:Key="SurfaceDark">#342D25</Color>
+            <Color x:Key="SurfaceAltDark">#3C342B</Color>
+            <Color x:Key="BorderDark">#4A4035</Color>
+
+            <Color x:Key="TextPrimaryDark">#F3EBDD</Color>
+            <Color x:Key="TextSecondaryDark">#D8CCBC</Color>
+            <Color x:Key="TextMutedDark">#B7AA98</Color>
 
             <!-- Brushes -->
             <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
-            <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
-            <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}" />
-            <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
 
             <!-- Page Defaults -->
             <Style TargetType="ContentPage">
-                <Setter Property="BackgroundColor" Value="{StaticResource BackgroundColor}" />
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource BackgroundLight}, Dark={StaticResource BackgroundDark}}" />
             </Style>
 
             <!-- Label Defaults -->
             <Style TargetType="Label">
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
             </Style>
 
             <!-- Entry Defaults -->
             <Style TargetType="Entry">
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-                <Setter Property="PlaceholderColor" Value="{StaticResource TextMuted}" />
-                <Setter Property="BackgroundColor" Value="{StaticResource SurfaceColor}" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                <Setter Property="PlaceholderColor"
+                        Value="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
                 <Setter Property="Margin" Value="0,2,0,0" />
             </Style>
 
             <!-- Editor Defaults -->
             <Style TargetType="Editor">
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-                <Setter Property="PlaceholderColor" Value="{StaticResource TextMuted}" />
-                <Setter Property="BackgroundColor" Value="{StaticResource SurfaceColor}" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                <Setter Property="PlaceholderColor"
+                        Value="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
                 <Setter Property="Margin" Value="0,2,0,0" />
             </Style>
 
             <!-- DatePicker Defaults -->
             <Style TargetType="DatePicker">
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-                <Setter Property="BackgroundColor" Value="{StaticResource SurfaceColor}" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
             </Style>
 
             <!-- TimePicker Defaults -->
             <Style TargetType="TimePicker">
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-                <Setter Property="BackgroundColor" Value="{StaticResource SurfaceColor}" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
             </Style>
 
             <!-- Card Frame -->
             <Style TargetType="Frame" x:Key="CardFrameStyle">
                 <Setter Property="Padding" Value="16" />
                 <Setter Property="Margin" Value="0,4,0,0" />
-                <Setter Property="CornerRadius" Value="14" />
-                <Setter Property="HasShadow" Value="False" />
-                <Setter Property="BackgroundColor" Value="{StaticResource CardColor}" />
-                <Setter Property="BorderColor" Value="{StaticResource BorderColor}" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource CardLight}, Dark={StaticResource CardDark}}" />
+                <Setter Property="BorderColor"
+                        Value="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" />
+                <Setter Property="Shadow">
+                    <Setter.Value>
+                        <Shadow
+                            Brush="#30000000"
+                            Offset="0,10"
+                            Radius="28"
+                            Opacity="0.5" />
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <!-- Section Title -->
             <Style TargetType="Label" x:Key="SectionTitleStyle">
                 <Setter Property="FontSize" Value="18" />
                 <Setter Property="FontAttributes" Value="Bold" />
-                <Setter Property="Margin" Value="0,8,0,0"/>
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="Margin" Value="0,8,0,0" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                <Setter Property="Opacity" Value="0.95" />
             </Style>
 
             <!-- Subtitle / Help Text -->
             <Style TargetType="Label" x:Key="SubtitleLabelStyle">
                 <Setter Property="FontSize" Value="14" />
-                <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
                 <Setter Property="Opacity" Value="0.9" />
             </Style>
 
             <!-- Muted Label -->
             <Style TargetType="Label" x:Key="MutedLabelStyle">
                 <Setter Property="FontSize" Value="12" />
-                <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                 <Setter Property="Opacity" Value="0.9" />
             </Style>
 
@@ -108,19 +146,23 @@
             <Style TargetType="Button" x:Key="PrimaryButtonStyle">
                 <Setter Property="Margin" Value="0,10,0,0" />
                 <Setter Property="Padding" Value="14,10" />
-                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="CornerRadius" Value="12" />
                 <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
-                <Setter Property="TextColor" Value="#1E1E1E" />
+                <Setter Property="TextColor" Value="#2E2E2E" />
             </Style>
 
             <!-- Secondary Button -->
             <Style TargetType="Button" x:Key="SecondaryButtonStyle">
                 <Setter Property="Margin" Value="0,6,6,0" />
                 <Setter Property="Padding" Value="12,8" />
-                <Setter Property="CornerRadius" Value="18" />
-                <Setter Property="BackgroundColor" Value="{StaticResource SurfaceColor}" />
-                <Setter Property="BorderColor" Value="{StaticResource BorderColor}" />
-                <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                <Setter Property="CornerRadius" Value="14" />
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
+                <Setter Property="BorderColor"
+                        Value="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" />
+                <Setter Property="BorderWidth" Value="1" />
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
             </Style>
 
             <!-- Status Message -->
@@ -139,24 +181,45 @@
             <Style TargetType="Frame" x:Key="ArloBubbleStyle">
                 <Setter Property="Padding" Value="14" />
                 <Setter Property="Margin" Value="0,6,40,0" />
-                <Setter Property="CornerRadius" Value="16" />
-                <Setter Property="HasShadow" Value="False" />
-                <Setter Property="BackgroundColor" Value="Transparent" />
-                <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                <Setter Property="CornerRadius" Value="18" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
+                <Setter Property="BorderColor"
+                        Value="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" />
                 <Setter Property="HorizontalOptions" Value="Start" />
+                <Setter Property="Shadow">
+                    <Setter.Value>
+                        <Shadow
+                            Brush="#12000000"
+                            Offset="0,3"
+                            Radius="10"
+                            Opacity="0.22" />
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <!-- User Bubble -->
             <Style TargetType="Frame" x:Key="UserBubbleStyle">
                 <Setter Property="Padding" Value="14" />
                 <Setter Property="Margin" Value="40,6,0,0" />
-                <Setter Property="CornerRadius" Value="16" />
-                <Setter Property="HasShadow" Value="False" />
-                <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+                <Setter Property="CornerRadius" Value="18" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="BackgroundColor" Value="{StaticResource PrimaryLight}" />
+                <Setter Property="BorderColor"
+                        Value="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" />
                 <Setter Property="HorizontalOptions" Value="End" />
+                <Setter Property="Shadow">
+                    <Setter.Value>
+                        <Shadow
+                            Brush="#12000000"
+                            Offset="0,3"
+                            Radius="10"
+                            Opacity="0.22" />
+                    </Setter.Value>
+                </Setter>
             </Style>
 
         </ResourceDictionary>
     </Application.Resources>
-
 </Application>

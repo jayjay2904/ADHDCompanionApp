@@ -5,7 +5,7 @@ using ADHDCompanionApp.Services.Interfaces;
 
 namespace ADHDCompanionApp.Platforms.Android.Services;
 
-[BroadcastReceiver(Enabled = true, Exported = false)]
+[BroadcastReceiver(Enabled = true, Exported = true)]
 public class ReminderReceiver : BroadcastReceiver
 {
     private const string LogTag = "AppReminder";

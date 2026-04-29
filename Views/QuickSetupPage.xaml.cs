@@ -8,5 +8,12 @@ public partial class QuickSetupPage : ContentPage
     {
         InitializeComponent();
         BindingContext = viewModel;
+        
+    }
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        Shell.SetTabBarIsVisible(this, false);
     }
 }

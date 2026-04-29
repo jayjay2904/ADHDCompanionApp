@@ -7,10 +7,5 @@ public partial class App : Application
         InitializeComponent();
 
         MainPage = shell;
-
-        Dispatcher.Dispatch(async () =>
-        {
-            await shell.InitialiseAsync();
-        });
     }
 }

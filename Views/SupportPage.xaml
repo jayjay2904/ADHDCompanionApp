@@ -20,31 +20,48 @@
                 Text="Support"
                 FontSize="28"
                 FontAttributes="Bold"
-                TextColor="{StaticResource TextPrimary}" />
+                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
             <Label
-                Text="Pick what feels closest. You only need one small next step."
+                Text="Let’s make this easier. Pick what feels closest right now."
                 FontSize="16"
-                Opacity="0.8"
-                TextColor="{StaticResource TextSecondary}" />
+                Opacity="0.85"
+                TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
             <Label
-                Text="Right now I feel..."
+                Text="Right now..."
                 Style="{StaticResource SectionTitleStyle}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
-                <CollectionView ItemsSource="{Binding SupportOptions}" SelectionMode="None">
-                    <CollectionView.ItemTemplate>
+                <VerticalStackLayout
+                    Spacing="10"
+                    BindableLayout.ItemsSource="{Binding SupportOptions}">
+
+                    <BindableLayout.ItemTemplate>
                         <DataTemplate>
                             <Frame
-                                Style="{StaticResource CardFrameStyle}"
+                                Padding="16"
                                 Margin="0,6,0,0"
-                                Padding="16">   
+                                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
+                                BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
+                                HasShadow="False">
+
+                                <Frame.Triggers>
+                                    <DataTrigger
+                                        TargetType="Frame"
+                                        Binding="{Binding IsSelected}"
+                                        Value="True">
+                                        <Setter Property="BorderColor" Value="{StaticResource Primary}" />
+                                        <Setter
+                                            Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource SurfaceAltLight}, Dark={StaticResource SurfaceAltDark}}" />
+                                    </DataTrigger>
+                                </Frame.Triggers>
 
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectSupportOptionCommand}"
-                                        CommandParameter="{Binding .}" />   
+                                        CommandParameter="{Binding .}" />
                                 </Frame.GestureRecognizers>
 
                                 <VerticalStackLayout Spacing="4">
@@ -52,109 +69,115 @@
                                         Text="{Binding Title}"
                                         FontSize="17"
                                         FontAttributes="Bold"
-                                        TextColor="{StaticResource TextPrimary}" /> 
+                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
                                     <Label
-                                        Text="Tap for quick support"
+                                        Text="Tap for a small next step"
                                         FontSize="13"
-                                        TextColor="{StaticResource TextSecondary}"
-                                        Opacity="0.8" />    
+                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"
+                                        Opacity="0.75" />
                                 </VerticalStackLayout>
+
                             </Frame>
                         </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </Frame>
+                    </BindableLayout.ItemTemplate>
 
-            <Label
-                Text="Support plan"
-                Style="{StaticResource SectionTitleStyle}" />
-
-            <Frame Style="{StaticResource CardFrameStyle}">
-                <VerticalStackLayout
-    x:Name="SupportPlanSection"
-    IsVisible="{Binding HasSelectedOption}"
-    Spacing="8">
-
-                    <Label
-        Text="Support plan"
-        Style="{StaticResource SectionTitleStyle}" />
-
-                    <Frame Style="{StaticResource CardFrameStyle}">
-                        <VerticalStackLayout Spacing="8">
-
-                            <Label
-                Text="{Binding SelectedSupportTitle}"
-                FontSize="18"
-                FontAttributes="Bold"
-                TextColor="{StaticResource TextPrimary}" />
-
-                            <Label
-                Text="{Binding SelectedValidationText}"
-                FontSize="15"
-                LineBreakMode="WordWrap"
-                MaxLines="3"
-                TextColor="{StaticResource TextPrimary}" />
-
-                            <Label
-                Text="Do this now"
-                FontAttributes="Bold"
-                FontSize="14"
-                TextColor="{StaticResource TextPrimary}" />
-
-                            <Label
-                Text="{Binding SelectedImmediateActionText}"
-                FontSize="15"
-                LineBreakMode="WordWrap"
-                MaxLines="3"
-                TextColor="{StaticResource TextSecondary}" />
-
-                            <Label
-                Text="Tiny next step"
-                FontAttributes="Bold"
-                FontSize="14"
-                TextColor="{StaticResource TextPrimary}" />
-
-                            <Label
-                Text="{Binding SelectedNextStepText}"
-                FontSize="15"
-                LineBreakMode="WordWrap"
-                MaxLines="3"
-                TextColor="{StaticResource TextSecondary}" />
-
-                            <HorizontalStackLayout Spacing="10" Margin="0,8,0,0">
-                                <Button
-                    Text="Try another step"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    Command="{Binding TryAnotherStepCommand}" />
-
-                                <Button
-                    Text="I'm okay now"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    Command="{Binding ClearSupportPlanCommand}" />
-                            </HorizontalStackLayout>
-
-                        </VerticalStackLayout>
-                    </Frame>
                 </VerticalStackLayout>
             </Frame>
 
+            <VerticalStackLayout
+                x:Name="SupportPlanSection"
+                IsVisible="{Binding HasSelectedOption}"
+                Spacing="8">
+
+                <Label
+                    Text="Let’s take one step"
+                    Style="{StaticResource SectionTitleStyle}" />
+
+                <Frame Style="{StaticResource CardFrameStyle}">
+                    <VerticalStackLayout Spacing="8">
+
+                        <Label
+                            Text="{Binding SelectedSupportTitle}"
+                            FontSize="19"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                        <Label
+                            Text="{Binding SelectedValidationText}"
+                            FontSize="15"
+                            LineBreakMode="WordWrap"
+                            MaxLines="3"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                            Opacity="0.9" />
+
+                        <Label
+                            Text="Start here"
+                            FontAttributes="Bold"
+                            FontSize="14"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                            Opacity="0.85" />
+
+                        <Label
+                            Text="{Binding SelectedImmediateActionText}"
+                            FontSize="15"
+                            LineBreakMode="WordWrap"
+                            MaxLines="3"
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+
+                        <Label
+                            Text="Then just this"
+                            FontAttributes="Bold"
+                            FontSize="14"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                            Opacity="0.85" />
+
+                        <Label
+                            Text="{Binding SelectedNextStepText}"
+                            FontSize="15"
+                            LineBreakMode="WordWrap"
+                            MaxLines="3"
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+
+                        <HorizontalStackLayout
+                            Spacing="10"
+                            Margin="0,8,0,0">
+
+                            <Button
+                                Text="Try a different step"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding TryAnotherStepCommand}" />
+
+                            <Button
+                                Text="That’s enough for now"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding ClearSupportPlanCommand}" />
+
+                        </HorizontalStackLayout>
+
+                    </VerticalStackLayout>
+                </Frame>
+
+            </VerticalStackLayout>
+
             <Label
-                Text="Quick reset"
+                Text="Need a quick reset?"
                 Style="{StaticResource SectionTitleStyle}"
-                Margin="0,12,0,0"/>
+                Margin="0,12,0,0" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
                 <VerticalStackLayout Spacing="10">
+
                     <Label
                         Text="{Binding QuickResetText}"
-                        FontSize="16"
-                        TextColor="{StaticResource TextPrimary}" /> 
+                        FontSize="15"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
                     <Button
-                        Text="Reset me"
+                        Text="Help me reset"
                         Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding ResetQuickSupportCommand}" /> 
+                        Command="{Binding ResetQuickSupportCommand}" />
+
                 </VerticalStackLayout>
             </Frame>
 

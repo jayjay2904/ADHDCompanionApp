@@ -1,16 +1,27 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace ADHDCompanionApp.Models.Entities;
 
-public class SupportOption
+public partial class SupportOption : ObservableObject
 {
-    public string Title { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string title = string.Empty;
 
-    public string ValidationText { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string validationText = string.Empty;
 
-    public string ImmediateActionText { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string immediateActionText = string.Empty;
 
-    public string NextStepText { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string nextStepText = string.Empty;
 
-    public string AlternateImmediateActionText { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string alternateImmediateActionText = string.Empty;
 
-    public string AlternateNextStepText { get; set; } = string.Empty;
+    [ObservableProperty]
+    private string alternateNextStepText = string.Empty;
+
+    [ObservableProperty]
+    private bool isSelected;
 }

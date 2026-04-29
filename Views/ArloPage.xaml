@@ -8,28 +8,27 @@
 
     <ContentPage.ToolbarItems>
         <ToolbarItem
-        IconImageSource="gear.svg"
-        Order="Primary"
-        Priority="0"
-        Clicked="OnPreferencesClicked" />
+            IconImageSource="gear.svg"
+            Order="Primary"
+            Priority="0"
+            Clicked="OnPreferencesClicked" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="16">
 
-        <!-- HEADER + QUICK PROMPTS -->
         <VerticalStackLayout Grid.Row="0" Spacing="8">
 
             <Label
                 Text="Hi, I’m Arlo"
-                TextColor="{StaticResource TextPrimary}"
                 FontSize="28"
-                FontAttributes="Bold" />
+                FontAttributes="Bold"
+                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
             <Label
                 Text="How can I help? Want to talk it through?"
                 FontSize="16"
                 Opacity="0.8"
-                TextColor="{StaticResource TextSecondary}" />
+                TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
             <CollectionView
                 ItemsSource="{Binding QuickPrompts}"
@@ -52,7 +51,6 @@
 
         </VerticalStackLayout>
 
-        <!-- CONVERSATION CARD -->
         <Frame
             Grid.Row="1"
             Style="{StaticResource CardFrameStyle}"
@@ -65,7 +63,7 @@
                     Text="Conversation"
                     FontSize="16"
                     FontAttributes="Bold"
-                    TextColor="{StaticResource TextPrimary}" />
+                    TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
                 <ScrollView
                     x:Name="MessagesScrollView"
@@ -79,16 +77,13 @@
                         <BindableLayout.ItemTemplateSelector>
                             <helpers:ChatMessageTemplateSelector>
 
-                                <!-- ARLO MESSAGE -->
                                 <helpers:ChatMessageTemplateSelector.ArloTemplate>
                                     <DataTemplate>
                                         <Grid>
-                                            <Frame
-                                                Style="{StaticResource ArloBubbleStyle}">
-
+                                            <Frame Style="{StaticResource ArloBubbleStyle}">
                                                 <Label
                                                     Text="{Binding Text}"
-                                                    TextColor="{StaticResource TextPrimary}"
+                                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
                                                     FontSize="16"
                                                     LineBreakMode="WordWrap" />
                                             </Frame>
@@ -96,17 +91,14 @@
                                     </DataTemplate>
                                 </helpers:ChatMessageTemplateSelector.ArloTemplate>
 
-                                <!-- USER MESSAGE -->
                                 <helpers:ChatMessageTemplateSelector.UserTemplate>
                                     <DataTemplate>
                                         <Grid>
-                                            <Frame
-                                                Style="{StaticResource UserBubbleStyle}">
-
+                                            <Frame Style="{StaticResource UserBubbleStyle}">
                                                 <Label
                                                     Text="{Binding Text}"
                                                     FontSize="16"
-                                                    TextColor="#1E1E1E"
+                                                    TextColor="#2E2E2E"
                                                     LineBreakMode="WordWrap" />
                                             </Frame>
                                         </Grid>
@@ -124,7 +116,6 @@
 
         </Frame>
 
-        <!-- INPUT CARD -->
         <Frame
             Grid.Row="2"
             Style="{StaticResource CardFrameStyle}"

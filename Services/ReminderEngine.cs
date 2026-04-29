@@ -237,11 +237,15 @@ public class ReminderEngine : IReminderEngine
             };
 
             await CancelTaskReminderAsync(task);
+
+            System.Diagnostics.Debug.WriteLine(
+                $"[TaskReminder] Scheduling '{request.Message}' for {request.TriggerTime:dd/MM/yyyy HH:mm:ss}. Now: {DateTime.Now:dd/MM/yyyy HH:mm:ss}");
+
             await ScheduleReminderAsync(request);
         }
         catch (Exception ex)
         {
-           System.Diagnostics.Debug.WriteLine($"[ReminderEngine ERROR] ScheduleTaskReminderAsync: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[ReminderEngine ERROR] ScheduleTaskReminderAsync: {ex}");
         }
     }
     public async Task CancelTaskReminderAsync(TaskItem task)

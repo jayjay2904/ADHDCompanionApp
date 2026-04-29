@@ -11,6 +11,15 @@ public partial class SupportViewModel : BaseViewModel
     private readonly ISupportService _supportService;
     private SupportOption? _currentOption;
     private bool _showingAlternateStep;
+    private int _quickResetIndex = 0;
+
+    private readonly List<string> _quickResetPrompts = new()
+    {
+        "Take one slow breath in. Hold for a moment. Breathe out longer than you breathed in.",
+        "Drop your shoulders. Unclench your jaw. Take one slow breath. You only need the next small step.",
+        "Put both feet on the floor. Look around you. Name one thing you can see and one thing you can hear.",
+        "You do not need to fix the whole day. Just soften this moment a little."
+    };
 
     public ObservableCollection<SupportOption> SupportOptions { get; } = new();
 
@@ -28,6 +37,7 @@ public partial class SupportViewModel : BaseViewModel
 
     [ObservableProperty]
     private bool hasSelectedOption = false;
+
     [ObservableProperty]
     private string quickResetText = "Take one slow breath in. Hold for a moment. Breathe out longer than you breathed in.";
 
@@ -50,6 +60,7 @@ public partial class SupportViewModel : BaseViewModel
 
         foreach (var option in options)
         {
+            option.IsSelected = false;
             SupportOptions.Add(option);
         }
     }
@@ -61,6 +72,13 @@ public partial class SupportViewModel : BaseViewModel
         {
             return;
         }
+
+        foreach (var supportOption in SupportOptions)
+        {
+            supportOption.IsSelected = false;
+        }
+
+        option.IsSelected = true;
 
         _currentOption = option;
         _showingAlternateStep = false;
@@ -97,15 +115,28 @@ public partial class SupportViewModel : BaseViewModel
         _currentOption = null;
         _showingAlternateStep = false;
 
+        foreach (var supportOption in SupportOptions)
+        {
+            supportOption.IsSelected = false;
+        }
+
         SelectedSupportTitle = string.Empty;
         SelectedValidationText = string.Empty;
         SelectedImmediateActionText = string.Empty;
         SelectedNextStepText = string.Empty;
         HasSelectedOption = false;
     }
+
     [RelayCommand]
     private void ResetQuickSupport()
     {
-        QuickResetText = "Drop your shoulders. Unclench your jaw. Take one slow breath. You only need the next small step.";
+        _quickResetIndex++;
+
+        if (_quickResetIndex >= _quickResetPrompts.Count)
+        {
+            _quickResetIndex = 0;
+        }
+
+        QuickResetText = _quickResetPrompts[_quickResetIndex];
     }
 }

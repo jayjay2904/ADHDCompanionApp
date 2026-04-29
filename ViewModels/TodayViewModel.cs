@@ -1,4 +1,5 @@
 using ADHDCompanionApp.Models.Entities;
+using ADHDCompanionApp.Services;
 using ADHDCompanionApp.Services.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -13,24 +14,11 @@ public partial class TodayViewModel : BaseViewModel
     private readonly IWinService _winService;
     private readonly ITruthBombService _truthBombService;
     private readonly IUserProfileService _profileService;
-
-    [ObservableProperty]
-    private string mood = string.Empty;
-
-    [ObservableProperty]
-    private int energyLevel = 3;
-
-    [ObservableProperty]
-    private int focusLevel = 3;
-
-    [ObservableProperty]
-    private string note = string.Empty;
+    private readonly IReminderEngine _reminderEngine;
+    public event Func<Task>? CelebrationRequested;
 
     [ObservableProperty]
     private string statusMessage = string.Empty;
-
-    [ObservableProperty]
-    private string nextStepSuggestion = "No suggestion yet.";
 
     [ObservableProperty]
     private string newTaskTitle = string.Empty;
@@ -42,16 +30,48 @@ public partial class TodayViewModel : BaseViewModel
     private string truthBombText = string.Empty;
 
     [ObservableProperty]
-    private string checkInPrompt = string.Empty;
-
-    [ObservableProperty]
     private string flowMessage = string.Empty;
 
     [ObservableProperty]
     private string greetingText = "Welcome";
 
-    public ObservableCollection<WinEntry> RecentWins { get; } = new();
+    [ObservableProperty]
+    private string selectedMood = string.Empty;
 
+    [ObservableProperty]
+    private int selectedMoodScore;
+
+    [ObservableProperty]
+    private string selectedMoodEmoji = string.Empty;
+
+    [ObservableProperty]
+    private string selectedMoodDisplayText = string.Empty;
+
+    [ObservableProperty]
+    private string nextStepText = string.Empty;
+
+    [ObservableProperty]
+    private bool hasSavedCheckIn;
+
+    [ObservableProperty]
+    private string checkInNote = string.Empty;
+
+    [ObservableProperty]
+    private bool isGreatSelected;
+
+    [ObservableProperty]
+    private bool isGoodSelected;
+
+    [ObservableProperty]
+    private bool isOkaySelected;
+
+    [ObservableProperty]
+    private bool isLowSelected;
+
+    [ObservableProperty]
+    private bool isStrugglingSelected;
+
+    public ObservableCollection<WinEntry> RecentWins { get; } = new();
     public ObservableCollection<TaskItem> Tasks { get; } = new();
 
     public TodayViewModel(
@@ -59,13 +79,15 @@ public partial class TodayViewModel : BaseViewModel
         ITaskService taskService,
         IWinService winService,
         ITruthBombService truthBombService,
-        IUserProfileService profileService)
+        IUserProfileService profileService,
+        IReminderEngine reminderEngine)
     {
         _checkInService = checkInService;
         _taskService = taskService;
         _winService = winService;
         _truthBombService = truthBombService;
         _profileService = profileService;
+        _reminderEngine = reminderEngine;
 
         Title = "Today";
     }
@@ -77,32 +99,95 @@ public partial class TodayViewModel : BaseViewModel
         await LoadTruthBombAsync();
         await LoadLatestCheckInAsync();
         await LoadGreetingAsync();
+
         UpdateFlowMessage();
     }
 
     [RelayCommand]
-    private async Task SaveCheckIn()
+    private async Task SelectMood(string value)
     {
         try
         {
-            var entry = new CheckInEntry
+            var parts = value.Split('|');
+
+            if (parts.Length != 3)
+                return;
+
+            SelectedMood = parts[0];
+            SelectedMoodScore = int.Parse(parts[1]);
+            SelectedMoodEmoji = parts[2];
+
+            UpdateMoodSelectionState();
+
+            SelectedMoodDisplayText = $"You said you're feeling: {SelectedMoodEmoji} {SelectedMood}";
+            NextStepText = GetNextStep(SelectedMoodScore);
+            HasSavedCheckIn = true;
+
+            var checkIn = new CheckInEntry
             {
-                Mood = Mood,
-                EnergyLevel = EnergyLevel,
-                FocusLevel = FocusLevel,
-                Note = Note
+                Mood = SelectedMood,
+                MoodScore = SelectedMoodScore,
+                MoodEmoji = SelectedMoodEmoji,
+
+                // Temporary mapping for older app code/database fields
+                EnergyLevel = SelectedMoodScore,
+                FocusLevel = SelectedMoodScore,
+
+                TimestampUtc = DateTime.UtcNow
             };
 
-            await _checkInService.SaveCheckInAsync(entry);
+            await _checkInService.SaveCheckInAsync(checkIn);
 
-            GenerateNextStepSuggestion();
-
-            StatusMessage = "Check-in saved.";
+            UpdateFlowMessage();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] SaveCheckIn failed: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] SelectMood failed: {ex}");
             StatusMessage = "Could not save check-in.";
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveNote()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(CheckInNote))
+            {
+                StatusMessage = "Nothing to save yet.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedMood))
+            {
+                StatusMessage = "Pick how you're feeling first.";
+                return;
+            }
+
+            var checkIn = new CheckInEntry
+            {
+                Mood = SelectedMood,
+                MoodScore = SelectedMoodScore,
+                MoodEmoji = SelectedMoodEmoji,
+
+                // Temporary mapping for older app code/database fields
+                EnergyLevel = SelectedMoodScore,
+                FocusLevel = SelectedMoodScore,
+
+                Note = CheckInNote.Trim(),
+                TimestampUtc = DateTime.UtcNow
+            };
+
+            await _checkInService.SaveCheckInAsync(checkIn);
+
+            StatusMessage = "Note saved.";
+            await Task.Delay(2000);
+            StatusMessage = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] SaveNote failed: {ex}");
+            StatusMessage = "Could not save note.";
         }
     }
 
@@ -112,9 +197,7 @@ public partial class TodayViewModel : BaseViewModel
         try
         {
             if (string.IsNullOrWhiteSpace(NewTaskTitle))
-            {
                 return;
-            }
 
             var task = new TaskItem
             {
@@ -129,11 +212,12 @@ public partial class TodayViewModel : BaseViewModel
             NewTaskTitle = string.Empty;
 
             StatusMessage = "Task added.";
-            await Task.Delay(2000);
-            StatusMessage = string.Empty;
-
+            
             await LoadTasksAsync();
             UpdateFlowMessage();
+           
+            await Task.Delay(2000);
+            StatusMessage = string.Empty;
         }
         catch (Exception ex)
         {
@@ -147,25 +231,36 @@ public partial class TodayViewModel : BaseViewModel
     {
         try
         {
-
             if (task is null)
                 return;
 
-            task.IsCompleted = !task.IsCompleted;
-            task.CompletedUtc = task.IsCompleted ? DateTime.UtcNow : null;
-
             if (task.IsCompleted)
-            {
-                task.IsEditingReminder = false;
-            }
+                return;
+
+            task.IsCompleted = true;
+            task.CompletedUtc = DateTime.UtcNow;
+            task.IsEditingReminder = false;
+
+            await _reminderEngine.CancelTaskReminderAsync(task);
 
             await _taskService.UpdateTaskAsync(task);
 
-            StatusMessage = task.IsCompleted
-                ? "Nice — task completed."
-                : "Task marked as active again.";
+            var win = new WinEntry
+            {
+                Text = $"Completed task: {task.Title}"
+            };
+
+            await _winService.AddWinAsync(win);
+            
+            if (CelebrationRequested is not null)
+            {
+                await CelebrationRequested.Invoke();
+            }
+
+            StatusMessage = "Nice — task completed.";
 
             await LoadTasksAsync();
+            await LoadWinsAsync();
             UpdateFlowMessage();
         }
         catch (Exception ex)
@@ -201,6 +296,7 @@ public partial class TodayViewModel : BaseViewModel
                 task.ReminderDateTime = null;
                 task.IsEditingReminder = false;
 
+                await _reminderEngine.CancelTaskReminderAsync(task);
                 await _taskService.UpdateTaskAsync(task);
 
                 StatusMessage = "Reminder removed.";
@@ -210,6 +306,51 @@ public partial class TodayViewModel : BaseViewModel
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[TodayViewModel] ToggleTaskReminder failed: {ex}");
+            StatusMessage = "Could not update reminder.";
+        }
+    }
+
+    public async Task SetTaskReminderEnabledAsync(TaskItem task, bool isEnabled)
+    {
+        try
+        {
+            if (task is null)
+                return;
+
+            if (task.IsCompleted)
+                return;
+
+            task.ReminderEnabled = isEnabled;
+
+            if (isEnabled)
+            {
+                var defaultDateTime = task.ReminderDateTime ?? DateTime.Now.AddMinutes(10);
+
+                task.ReminderDate = defaultDateTime.Date;
+                task.ReminderTime = defaultDateTime.TimeOfDay;
+                task.IsEditingReminder = true;
+
+                await _taskService.UpdateTaskAsync(task);
+
+                StatusMessage = "Choose when you want the reminder.";
+            }
+            else
+            {
+                task.ReminderDateTime = null;
+                task.IsEditingReminder = false;
+
+                await _reminderEngine.CancelTaskReminderAsync(task);
+                await _taskService.UpdateTaskAsync(task);
+
+                StatusMessage = "Reminder removed.";
+            }
+
+            await LoadTasksAsync();
+            UpdateFlowMessage();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] SetTaskReminderEnabledAsync failed: {ex}");
             StatusMessage = "Could not update reminder.";
         }
     }
@@ -236,10 +377,48 @@ public partial class TodayViewModel : BaseViewModel
                 return;
             }
 
+#if ANDROID
+            var notificationPermission = await Permissions.RequestAsync<Permissions.PostNotifications>();
+
+            if (notificationPermission != PermissionStatus.Granted)
+            {
+                await Shell.Current.DisplayAlert(
+                    "Notifications are off",
+                    "Task reminders need notification permission before I can send them.",
+                    "OK");
+
+                task.ReminderEnabled = false;
+                task.ReminderDateTime = null;
+                task.IsEditingReminder = false;
+
+                await _taskService.UpdateTaskAsync(task);
+                await LoadTasksAsync();
+
+                return;
+            }
+
+            var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
+
+            if (!canScheduleExact)
+            {
+                var openSettings = await Shell.Current.DisplayAlert(
+                    "More accurate reminders",
+                    "Android may delay task reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
+                    "Open settings",
+                    "Not now");
+
+                if (openSettings)
+                {
+                    await _reminderEngine.OpenExactReminderSettingsAsync();
+                }
+            }
+#endif
+
             task.ReminderDateTime = reminderDateTime;
             task.IsEditingReminder = false;
 
             await _taskService.UpdateTaskAsync(task);
+            await _reminderEngine.ScheduleTaskReminderAsync(task);
 
             StatusMessage = "Task reminder saved.";
 
@@ -258,9 +437,7 @@ public partial class TodayViewModel : BaseViewModel
         try
         {
             if (string.IsNullOrWhiteSpace(NewWinText))
-            {
                 return;
-            }
 
             var win = new WinEntry
             {
@@ -294,7 +471,10 @@ public partial class TodayViewModel : BaseViewModel
                 return;
 
             task.IsCompleted = true;
+            task.CompletedUtc = DateTime.UtcNow;
+            task.IsEditingReminder = false;
 
+            await _reminderEngine.CancelTaskReminderAsync(task);
             await _taskService.CompleteTaskAsync(task.Id);
 
             StatusMessage = "Nice — task completed.";
@@ -314,6 +494,8 @@ public partial class TodayViewModel : BaseViewModel
         try
         {
             var tasks = await _taskService.GetAllTasksAsync();
+
+            System.Diagnostics.Debug.WriteLine($"[TodayViewModel] Loaded {tasks.Count()} tasks from database.");
 
             Tasks.Clear();
 
@@ -376,22 +558,19 @@ public partial class TodayViewModel : BaseViewModel
             if (latestCheckIn is null)
                 return;
 
-            Mood = latestCheckIn.Mood;
-            EnergyLevel = latestCheckIn.EnergyLevel;
-            FocusLevel = latestCheckIn.FocusLevel;
-            Note = latestCheckIn.Note;
+            SelectedMood = latestCheckIn.Mood;
+            SelectedMoodScore = latestCheckIn.MoodScore > 0
+                ? latestCheckIn.MoodScore
+                : latestCheckIn.EnergyLevel;
 
-            GenerateNextStepSuggestion();
+            SelectedMoodEmoji = latestCheckIn.MoodEmoji;
 
-            var timeSince = DateTime.UtcNow - latestCheckIn.TimestampUtc;
-
-            if (timeSince.TotalHours < 12)
+            if (!string.IsNullOrWhiteSpace(SelectedMood))
             {
-                CheckInPrompt = $"Earlier you felt {latestCheckIn.Mood}. How are you feeling now?";
-            }
-            else
-            {
-                CheckInPrompt = $"Last time you checked in, you felt {latestCheckIn.Mood}. How are things today?";
+                SelectedMoodDisplayText = $"Last check-in: {SelectedMoodEmoji} {SelectedMood}";
+                NextStepText = GetNextStep(SelectedMoodScore);
+                HasSavedCheckIn = true;
+                UpdateMoodSelectionState();
             }
         }
         catch (Exception ex)
@@ -421,33 +600,9 @@ public partial class TodayViewModel : BaseViewModel
         }
     }
 
-    private void GenerateNextStepSuggestion()
-    {
-        if (EnergyLevel <= 2 && FocusLevel <= 2)
-        {
-            NextStepSuggestion = "Keep it simple. Pick one tiny task.";
-        }
-        else if (EnergyLevel <= 2)
-        {
-            NextStepSuggestion = "Low energy. Focus on something easy or take a short reset.";
-        }
-        else if (FocusLevel <= 2)
-        {
-            NextStepSuggestion = "You're struggling to focus. Try a 5-minute timer to get started.";
-        }
-        else if (EnergyLevel >= 4 && FocusLevel >= 4)
-        {
-            NextStepSuggestion = "Good window. Tackle something meaningful.";
-        }
-        else
-        {
-            NextStepSuggestion = "Make a small step forward. Progress over perfection.";
-        }
-    }
-
     private void UpdateFlowMessage()
     {
-        if (string.IsNullOrWhiteSpace(Mood))
+        if (string.IsNullOrWhiteSpace(SelectedMood))
         {
             FlowMessage = "Start with a quick check-in. How are you feeling?";
         }
@@ -462,6 +617,53 @@ public partial class TodayViewModel : BaseViewModel
         else
         {
             FlowMessage = "Add a task to get started.";
+        }
+    }
+
+    private string GetNextStep(int moodScore)
+    {
+        return moodScore switch
+        {
+            5 => "You’re in a good place. Pick one thing you can move forward while your brain is cooperating.",
+            4 => "Nice. Keep it light and choose one small task to build momentum.",
+            3 => "Let’s keep it simple. Pick one task you can finish in five minutes.",
+            2 => "Go gentle. Choose the smallest possible step, even if it feels ridiculously easy.",
+            1 => "No pressure today. Start with something kind to your nervous system: water, food, movement, or a reset.",
+            _ => "Pick one small thing. Tiny steps still count."
+        };
+    }
+
+    private void UpdateMoodSelectionState()
+    {
+        // Reset everything first
+        IsGreatSelected = false;
+        IsGoodSelected = false;
+        IsOkaySelected = false;
+        IsLowSelected = false;
+        IsStrugglingSelected = false;
+
+        // Then set the one that matches
+        switch (SelectedMood?.Trim())
+        {
+            case "Great":
+                IsGreatSelected = true;
+                break;
+
+            case "Good":
+                IsGoodSelected = true;
+                break;
+
+            case "Okay":
+                IsOkaySelected = true;
+                break;
+
+            case "Low":
+                IsLowSelected = true;
+                break;
+
+            case "Struggling":
+                IsStrugglingSelected = true;
+                break;
         }
     }
 }

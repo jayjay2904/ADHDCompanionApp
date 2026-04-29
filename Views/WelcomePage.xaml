@@ -14,14 +14,14 @@
             Text="ADHD Companion"
             FontSize="28"
             FontAttributes="Bold"
-            TextColor="{StaticResource TextPrimary}"
+            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
             HorizontalOptions="Center" />
 
         <Label
             x:Name="WelcomeMessageLabel"
             Text="Your calm place to land."
             FontSize="16"
-            TextColor="{StaticResource TextSecondary}"
+            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}"
             HorizontalOptions="Center"
             HorizontalTextAlignment="Center" />
 
@@ -34,5 +34,4 @@
             HorizontalOptions="Center" />
 
     </VerticalStackLayout>
-
 </ContentPage>

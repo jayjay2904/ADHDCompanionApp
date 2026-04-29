@@ -11,7 +11,7 @@
                 Text="Quick Setup"
                 FontSize="24"
                 FontAttributes="Bold"
-                TextColor="{StaticResource TextPrimary}" />
+                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
                 <VerticalStackLayout Spacing="16">
@@ -23,7 +23,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label
                             Text="Do you want medication reminders?"
-                            TextColor="{StaticResource TextPrimary}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
                         <Switch
                             IsToggled="{Binding UsesMedicationSupport}"
@@ -37,14 +37,14 @@
 
                         <Label
                             Text="What time would you like your reminder?"
-                            TextColor="{StaticResource TextSecondary}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
                         <TimePicker
                             Time="{Binding ReminderTime}" />
 
                         <Label
                             Text="When should reminders start?"
-                            TextColor="{StaticResource TextSecondary}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
                         <DatePicker
                             Date="{Binding MedicationStartDate}" />
@@ -54,7 +54,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label
                             Text="Do you want task support?"
-                            TextColor="{StaticResource TextPrimary}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
                         <Switch
                             IsToggled="{Binding UsesTaskSupport}"

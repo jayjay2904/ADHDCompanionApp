@@ -7,14 +7,17 @@ public class ArloService : IArloService
 {
     private readonly ICheckInService _checkInService;
     private readonly ITaskService _taskService;
+    private readonly IArloAiClient _arloAiClient;
     private readonly List<ChatMessage> _messages = new();
 
     public ArloService(
         ICheckInService checkInService,
-        ITaskService taskService)
+        ITaskService taskService,
+        IArloAiClient arloAiClient)
     {
         _checkInService = checkInService;
         _taskService = taskService;
+        _arloAiClient = arloAiClient;
     }
 
     public Task<List<ChatMessage>> GetMessagesAsync()
@@ -48,6 +51,31 @@ public class ArloService : IArloService
 
         var emotionalContext = BuildEmotionalContext(latestCheckIn);
 
+        var aiRequest = new ArloAiRequest
+        {
+            UserMessage = userMessage,
+            EmotionalContext = emotionalContext,
+            OpenTasks = unfinishedTasks
+                .Take(3)
+                .Select(t => t.Title)
+                .ToList()
+        };
+
+        var aiReply = await _arloAiClient.GetReplyAsync(aiRequest);
+
+        if (!string.IsNullOrWhiteSpace(aiReply))
+        {
+            return aiReply;
+        }
+
+        return GetFallbackReply(message, emotionalContext, unfinishedTasks);
+    }
+
+    private static string GetFallbackReply(
+        string message,
+        string emotionalContext,
+        List<TaskItem> unfinishedTasks)
+    {
         string response;
 
         if (message.Contains("overwhelmed"))
@@ -64,7 +92,7 @@ public class ArloService : IArloService
         }
         else if (message.Contains("tired") || message.Contains("low energy"))
         {
-            response = "Low energy days are different. The goal isn’t to push through — it’s to adjust the expectation and be a bit kinder to yourself.";
+            response = "Low energy days are different. The goal isn’t to push through. It’s to adjust the expectation and be a bit kinder to yourself.";
         }
         else
         {

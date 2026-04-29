@@ -70,48 +70,60 @@ public partial class QuickSetupViewModel : BaseViewModel
             };
 
             await _profileService.SaveProfileAsync(profile);
+            Preferences.Set("IsOnboardingComplete", true);
+
+
+            if (Shell.Current is AppShell shell)
+            {
+                await shell.UpdateNavigationForSetupStateAsync();
+                await shell.GoToAsync("//TodayPage");
+            }
+
 
 #if ANDROID
             if (UsesMedicationSupport && profile.MedicationReminderTime.HasValue && profile.MedicationStartDate.HasValue)
             {
-                var notificationPermission = await Permissions.RequestAsync<Permissions.PostNotifications>();
+                var notificationPermission = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
 
-                if (notificationPermission == PermissionStatus.Granted)
+                if (notificationPermission != PermissionStatus.Granted)
                 {
-                    var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
-
-                    if (!canScheduleExact)
-                    {
-                        var openSettings = await Shell.Current.DisplayAlert(
-                            "More accurate reminders",
-                            "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
-                            "Open settings",
-                            "Not now");
-
-                        if (openSettings)
-                        {
-                            await _reminderEngine.OpenExactReminderSettingsAsync();
-                        }
-                    }
-
-                    await _reminderEngine.ScheduleMedicationReminderAsync(profile);
+                    notificationPermission = await Permissions.RequestAsync<Permissions.PostNotifications>();
                 }
-                else
+
+                if (notificationPermission != PermissionStatus.Granted)
                 {
                     await Shell.Current.DisplayAlert(
                         "Notifications are off",
-                        "Medication reminders need notification permission before I can send them.",
+                        "Medication reminders need notification permission before Arlo can send them.",
                         "OK");
 
                     await _reminderEngine.CancelMedicationReminderAsync();
+                    return;
                 }
+
+                var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
+
+                if (!canScheduleExact)
+                {
+                    var openSettings = await Shell.Current.DisplayAlert(
+                        "More accurate reminders",
+                        "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
+                        "Open settings",
+                        "Not now");
+
+                    if (openSettings)
+                    {
+                        await _reminderEngine.OpenExactReminderSettingsAsync();
+                    }
+                }
+
+                await _reminderEngine.ScheduleMedicationReminderAsync(profile);
             }
             else
             {
                 await _reminderEngine.CancelMedicationReminderAsync();
             }
 #endif
-
             await Shell.Current.GoToAsync("//TodayPage");
         }
         catch (Exception ex)

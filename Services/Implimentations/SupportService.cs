@@ -18,7 +18,7 @@ public class SupportService : ISupportService
         },
         new SupportOption
         {
-            Title = "I can't start",
+            Title = "I can't get started",
             ValidationText = "You do not need to finish it. You just need to begin smaller.",
             ImmediateActionText = "Open the task. Do not do it yet. Just open it.",
             NextStepText = "Do the 2-minute version only.",
@@ -27,7 +27,7 @@ public class SupportService : ISupportService
         },
         new SupportOption
         {
-            Title = "I'm spiralling",
+            Title = "My brain won't slow down",
             ValidationText = "Your brain is loud right now. That does not mean everything is urgent.",
             ImmediateActionText = "Look around and name 3 things you can see.",
             NextStepText = "Choose one thing you can control in the next 5 minutes.",

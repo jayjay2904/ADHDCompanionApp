@@ -13,6 +13,7 @@ public class UserProfileService : IUserProfileService
     private const string ReminderHourKey = "profile_reminder_hour";
     private const string ReminderMinuteKey = "profile_reminder_minute";
     private const string MedicationStartDateKey = "profile_medication_start_date";
+    public bool IsOnboardingComplete => Preferences.Get("IsOnboardingComplete", false);
 
     public Task<UserProfile?> GetProfileAsync()
     {

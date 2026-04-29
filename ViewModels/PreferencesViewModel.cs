@@ -86,47 +86,54 @@ public partial class PreferencesViewModel : BaseViewModel
 
 #if ANDROID
         if (UsesMedicationSupport &&
-            profile.MedicationReminderTime.HasValue &&
-            profile.MedicationStartDate.HasValue)
+    profile.MedicationReminderTime.HasValue &&
+    profile.MedicationStartDate.HasValue)
         {
-            var permission = await Permissions.RequestAsync<Permissions.PostNotifications>();
+            var permission = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
 
-            if (permission == PermissionStatus.Granted)
+            if (permission != PermissionStatus.Granted)
             {
-                var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
-
-                if (!canScheduleExact)
-                {
-                    var openSettings = await Shell.Current.DisplayAlert(
-                        "More accurate reminders",
-                        "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
-                        "Open settings",
-                        "Not now");
-
-                    if (openSettings)
-                    {
-                        await _reminderEngine.OpenExactReminderSettingsAsync();
-                    }
-                }
-
-                await _reminderEngine.ScheduleMedicationReminderAsync(profile);
-
-                StatusMessage = $"Preferences saved. Reminder set for {profile.MedicationReminderTime.Value:hh\\:mm}.";
+                permission = await Permissions.RequestAsync<Permissions.PostNotifications>();
             }
-            else
+
+            if (permission != PermissionStatus.Granted)
             {
                 await _reminderEngine.CancelMedicationReminderAsync();
+
                 StatusMessage = "Preferences saved, but notification permission was not granted.";
                 return;
             }
+
+            var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
+
+            if (!canScheduleExact)
+            {
+                var openSettings = await Shell.Current.DisplayAlert(
+                    "More accurate reminders",
+                    "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
+                    "Open settings",
+                    "Not now");
+
+                if (openSettings)
+                {
+                    await _reminderEngine.OpenExactReminderSettingsAsync();
+                }
+            }
+
+            await _reminderEngine.ScheduleMedicationReminderAsync(profile);
+
+            StatusMessage = $"Preferences saved. Reminder set for {profile.MedicationReminderTime.Value:hh\\:mm}.";
+            await Shell.Current.Navigation.PopModalAsync();
         }
         else
         {
             await _reminderEngine.CancelMedicationReminderAsync();
             StatusMessage = "Preferences saved. Medication reminders are off.";
+            await Shell.Current.Navigation.PopModalAsync();
         }
 #else
-        StatusMessage = "Preferences saved.";
+StatusMessage = "Preferences saved.";
+await Shell.Current.Navigation.PopModalAsync();
 #endif
     }
 

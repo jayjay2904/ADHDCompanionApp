@@ -80,11 +80,16 @@ public class AndroidReminderScheduler : IPlatformReminderScheduler
             }
 
             var pendingIntent = CreateReminderPendingIntent(context, request);
-            var triggerMillis = new DateTimeOffset(request.TriggerTime).ToUnixTimeMilliseconds();
+
+            // Treat reminder time as local phone time
+            var localTriggerTime = DateTime.SpecifyKind(request.TriggerTime, DateTimeKind.Local);
+            var triggerMillis = new DateTimeOffset(localTriggerTime).ToUnixTimeMilliseconds();
+
             var canScheduleExact = await CanScheduleExactRemindersInternalAsync(alarmManager);
 
             Log.Debug(LogTag, $"Scheduling reminder '{request.ReminderKey}'");
-            Log.Debug(LogTag, $"Trigger time: {request.TriggerTime:yyyy-MM-dd HH:mm:ss}");
+            Log.Debug(LogTag, $"Trigger time: {localTriggerTime:yyyy-MM-dd HH:mm:ss}");
+            Log.Debug(LogTag, $"Now: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             Log.Debug(LogTag, $"Trigger millis: {triggerMillis}");
             Log.Debug(LogTag, $"Can schedule exact alarms: {canScheduleExact}");
 
