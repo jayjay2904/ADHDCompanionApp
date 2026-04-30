@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
+
 namespace ADHDCompanionApp.ViewModels;
 
 public partial class TodayViewModel : BaseViewModel
@@ -99,6 +100,7 @@ public partial class TodayViewModel : BaseViewModel
         await LoadTruthBombAsync();
         await LoadLatestCheckInAsync();
         await LoadGreetingAsync();
+
 
         UpdateFlowMessage();
     }
@@ -208,15 +210,12 @@ public partial class TodayViewModel : BaseViewModel
             };
 
             await _taskService.AddTaskAsync(task);
-
+            await LoadTasksAsync();
             NewTaskTitle = string.Empty;
 
-            StatusMessage = "Task added.";
-            
-            await LoadTasksAsync();
             UpdateFlowMessage();
-           
-            await Task.Delay(2000);
+            StatusMessage = "Task added.";
+            await Task.Delay(1500);
             StatusMessage = string.Empty;
         }
         catch (Exception ex)
@@ -242,19 +241,30 @@ public partial class TodayViewModel : BaseViewModel
             task.IsEditingReminder = false;
 
             await _reminderEngine.CancelTaskReminderAsync(task);
-
             await _taskService.UpdateTaskAsync(task);
+
+            var messages = new[]
+            {
+            $"Completed: {task.Title}",
+            $"Ticked off: {task.Title}",
+            $"Made progress on: {task.Title}",
+            $"Done: {task.Title}"
+        };
 
             var win = new WinEntry
             {
-                Text = $"Completed task: {task.Title}"
+                Text = messages[Random.Shared.Next(messages.Length)]
             };
 
             await _winService.AddWinAsync(win);
-            
-            if (CelebrationRequested is not null)
+
+            try
             {
-                await CelebrationRequested.Invoke();
+                HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TodayViewModel] Haptic feedback failed: {ex}");
             }
 
             StatusMessage = "Nice — task completed.";
@@ -488,18 +498,22 @@ public partial class TodayViewModel : BaseViewModel
             StatusMessage = "Could not complete task.";
         }
     }
-
+    
     public async Task LoadTasksAsync()
     {
         try
         {
+            
             var tasks = await _taskService.GetAllTasksAsync();
 
             System.Diagnostics.Debug.WriteLine($"[TodayViewModel] Loaded {tasks.Count()} tasks from database.");
 
             Tasks.Clear();
 
-            foreach (var task in tasks.OrderBy(t => t.IsCompleted).ThenBy(t => t.CreatedUtc))
+            foreach (var task in tasks
+                    .OrderBy(t => t.IsCompleted)
+                    .ThenByDescending(t => t.IsCompleted ? t.CompletedUtc : t.CreatedUtc)
+                    .ThenByDescending(t => t.CreatedUtc))
             {
                 if (task.ReminderDateTime.HasValue)
                 {

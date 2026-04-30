@@ -72,6 +72,16 @@
                             OnColor="{StaticResource Primary}" />
                     </VerticalStackLayout>
 
+                    <VerticalStackLayout Spacing="8">
+                        <Label
+                            Text="Show celebration when completing tasks?"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                        <Switch
+                            IsToggled="{Binding EnableCelebration}"
+                            ThumbColor="{StaticResource Primary}"
+                            OnColor="{StaticResource Primary}" />
+                    </VerticalStackLayout>
                     <Label
                         Text="{Binding StatusMessage}"
                         Style="{StaticResource StatusMessageStyle}" />

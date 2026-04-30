@@ -1,18 +1,15 @@
 using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.ViewModels;
+using CommunityToolkit.Maui.Extensions;
 
 namespace ADHDCompanionApp.Views;
 
 public partial class TodayPage : ContentPage
 {
-    private bool _isLoadingData;
-
     public TodayPage(TodayViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;
-
-        viewModel.CelebrationRequested += ShowCelebrationAsync;
     }
 
     protected override async void OnAppearing()
@@ -23,15 +20,7 @@ public partial class TodayPage : ContentPage
 
         if (BindingContext is TodayViewModel viewModel)
         {
-            try
-            {
-                _isLoadingData = true;
-                await viewModel.LoadDataAsync();
-            }
-            finally
-            {
-                _isLoadingData = false;
-            }
+            await viewModel.LoadDataAsync();
         }
     }
 
@@ -40,58 +29,72 @@ public partial class TodayPage : ContentPage
         await Shell.Current.GoToAsync(nameof(PreferencesPage));
     }
 
-    private async Task ShowCelebrationAsync()
+    private async void OnTaskCardTapped(object sender, TappedEventArgs e)
     {
-        var messages = new[]
-        {
-            "Nice job",
-            "Well done",
-            "That counts",
-            "Progress made",
-            "Good move"
-        };
-
-        CelebrationText.Text = messages[Random.Shared.Next(messages.Length)];
-
-        CelebrationOverlay.IsVisible = true;
-
-        CelebrationStack.Opacity = 0;
-        CelebrationStack.Scale = 0.6;
-        CelebrationStack.TranslationY = 30;
-
-        await Task.WhenAll(
-            CelebrationStack.FadeTo(1, 220, Easing.CubicOut),
-            CelebrationStack.ScaleTo(1.25, 300, Easing.CubicOut),
-            CelebrationStack.TranslateTo(0, 0, 300, Easing.CubicOut)
-        );
-
-        await Task.Delay(1200);
-
-        await Task.WhenAll(
-            CelebrationStack.FadeTo(0, 350, Easing.CubicIn),
-            CelebrationStack.ScaleTo(1.4, 350, Easing.CubicIn),
-            CelebrationStack.TranslateTo(0, -40, 350, Easing.CubicIn)
-        );
-
-        CelebrationOverlay.IsVisible = false;
-
-        CelebrationStack.TranslationY = 0;
-        CelebrationStack.Scale = 1;
-    }
-    private async void OnTaskReminderToggled(object sender, ToggledEventArgs e)
-    {
-        if (_isLoadingData)
+        if (sender is not VisualElement tappedArea)
             return;
 
-        if (sender is not Switch reminderSwitch)
+        if (tappedArea.BindingContext is not TaskItem task)
             return;
 
-        if (reminderSwitch.BindingContext is not TaskItem task)
+        if (task.IsCompleted)
             return;
 
         if (BindingContext is not TodayViewModel viewModel)
             return;
 
-        await viewModel.SetTaskReminderEnabledAsync(task, e.Value);
+        Element? current = tappedArea;
+
+        while (current is not null && current is not Microsoft.Maui.Controls.Frame)
+        {
+            current = current.Parent;
+        }
+
+        if (current is not Microsoft.Maui.Controls.Frame taskFrame)
+            return;
+
+        var originalBackground = taskFrame.BackgroundColor;
+
+        var thumb = taskFrame.FindByName<Label>("CardThumbsUp");
+
+        if (thumb is not null)
+        {
+            thumb.Opacity = 0;
+            thumb.Scale = 0.6;
+            thumb.TranslationY = 10;
+        }
+
+        // 👇 PRESS FEEL
+        await taskFrame.ScaleTo(0.97, 80, Easing.CubicOut);
+
+        // 👇 INSTANT VISUAL FEEDBACK
+        taskFrame.BackgroundColor = Color.FromArgb("#B3CF99");
+
+        // 👇 RELEASE
+        await taskFrame.ScaleTo(1.0, 120, Easing.CubicOut);
+
+        if (thumb is not null)
+        {
+            await Task.WhenAll(
+                thumb.FadeTo(1, 120, Easing.CubicOut),
+                thumb.ScaleTo(1.2, 160, Easing.CubicOut),
+                thumb.TranslateTo(0, 0, 160, Easing.CubicOut)
+            );
+        }
+
+        await Task.Delay(180);
+
+        await taskFrame.BackgroundColorTo(originalBackground, 300);
+
+        if (thumb is not null)
+        {
+            await Task.WhenAll(
+                thumb.FadeTo(0, 220, Easing.CubicIn),
+                thumb.ScaleTo(1.45, 220, Easing.CubicIn),
+                thumb.TranslateTo(0, -12, 220, Easing.CubicIn)
+            );
+        }
+
+        await viewModel.ToggleTaskCommand.ExecuteAsync(task);
     }
 }

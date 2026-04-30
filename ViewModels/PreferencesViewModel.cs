@@ -29,6 +29,9 @@ public partial class PreferencesViewModel : BaseViewModel
     [ObservableProperty]
     private string statusMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool enableCelebration = true;
+
     public PreferencesViewModel(
     IUserProfileService profileService,
     IReminderEngine reminderEngine)
@@ -52,6 +55,7 @@ public partial class PreferencesViewModel : BaseViewModel
         UsesTaskSupport = profile.UsesTaskSupport;
         ReminderTime = profile.MedicationReminderTime ?? new TimeSpan(9, 0, 0);
         MedicationStartDate = profile.MedicationStartDate ?? DateTime.Today;
+        EnableCelebration = profile.EnableCelebration;
     }
 
     [RelayCommand]
@@ -79,7 +83,8 @@ public partial class PreferencesViewModel : BaseViewModel
             MedicationReminderTime = UsesMedicationSupport ? ReminderTime : null,
             MedicationStartDate = UsesMedicationSupport ? MedicationStartDate : null,
             CreatedUtc = existingProfile?.CreatedUtc ?? DateTime.UtcNow,
-            UpdatedUtc = DateTime.UtcNow
+            UpdatedUtc = DateTime.UtcNow,
+            EnableCelebration = EnableCelebration
         };
 
         await _profileService.SaveProfileAsync(profile);

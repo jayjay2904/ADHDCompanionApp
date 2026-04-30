@@ -108,4 +108,25 @@ public class TaskService : ITaskService
             System.Diagnostics.Debug.WriteLine($"[TaskService] UpdateTaskAsync failed: {ex}");
         }
     }
+    public async Task DeleteTaskAsync(string taskId)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(taskId))
+                return;
+
+            var tasks = await _databaseService.GetTasksAsync();
+            var task = tasks.FirstOrDefault(t => t.Id == taskId);
+
+            if (task is null)
+                return;
+
+            await _reminderEngine.CancelTaskReminderAsync(task);
+            await _databaseService.DeleteTaskAsync(task);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[TaskService] DeleteTaskAsync failed: {ex}");
+        }
+    }
 }
