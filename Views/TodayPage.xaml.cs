@@ -97,4 +97,15 @@ public partial class TodayPage : ContentPage
 
         await viewModel.ToggleTaskCommand.ExecuteAsync(task);
     }
+    private async void OnSaveNotePressed(object sender, EventArgs e)
+    {
+        if (sender is Button btn)
+            await btn.ScaleTo(0.96, 80);
+    }
+
+    private async void OnSaveNoteReleased(object sender, EventArgs e)
+    {
+        if (sender is Button btn)
+            await btn.ScaleTo(1, 120);
+    }
 }

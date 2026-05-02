@@ -6,6 +6,11 @@
     xmlns:helpers="clr-namespace:ADHDCompanionApp.Helpers"
     Title="Arlo">
 
+    <ContentPage.Resources>
+        <helpers:ArloPromptColourConverter x:Key="ArloPromptColourConverter" />
+        <helpers:InverseBoolConverter x:Key="InverseBoolConverter" />
+    </ContentPage.Resources>
+
     <ContentPage.ToolbarItems>
         <ToolbarItem
             IconImageSource="gear.svg"
@@ -14,134 +19,332 @@
             Clicked="OnPreferencesClicked" />
     </ContentPage.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="16">
+    <Grid>
 
-        <VerticalStackLayout Grid.Row="0" Spacing="8">
+        <!-- Main Page Layout -->
+        <Grid RowDefinitions="Auto,*,Auto,Auto" Padding="20" RowSpacing="8">
 
-            <Label
-                Text="Hi, I’m Arlo"
-                FontSize="28"
-                FontAttributes="Bold"
-                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-
-            <Label
-                Text="How can I help? Want to talk it through?"
-                FontSize="16"
-                Opacity="0.8"
-                TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
-
-            <CollectionView
-                ItemsSource="{Binding QuickPrompts}"
-                ItemsLayout="HorizontalList"
-                SelectionMode="None"
-                HeightRequest="50"
+            <!-- Header + First-Time Quick Prompts -->
+            <VerticalStackLayout
+                Grid.Row="0"
+                Spacing="2"
                 IsVisible="{Binding AreQuickPromptsVisible}">
 
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Button
-                            Text="{Binding .}"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
-                            CommandParameter="{Binding .}" />
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
+                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
 
-            </CollectionView>
+                    <Image
+                        Source="arlo_main.png"
+                        HeightRequest="120"
+                        WidthRequest="120"
+                        Aspect="AspectFit" />
 
-        </VerticalStackLayout>
+                    <VerticalStackLayout Spacing="2" VerticalOptions="Center">
 
-        <Frame
-            Grid.Row="1"
-            Style="{StaticResource CardFrameStyle}"
-            Padding="12">
+                        <Label
+                            Text="Hi, I’m Arlo"
+                            FontSize="28"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
-            <Grid RowDefinitions="Auto,*" RowSpacing="8">
-
-                <Label
-                    Grid.Row="0"
-                    Text="Conversation"
-                    FontSize="16"
-                    FontAttributes="Bold"
-                    TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-
-                <ScrollView
-                    x:Name="MessagesScrollView"
-                    Grid.Row="1">
-
-                    <VerticalStackLayout
-                        x:Name="MessagesStack"
-                        Spacing="8"
-                        BindableLayout.ItemsSource="{Binding Messages}">
-
-                        <BindableLayout.ItemTemplateSelector>
-                            <helpers:ChatMessageTemplateSelector>
-
-                                <helpers:ChatMessageTemplateSelector.ArloTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <Frame Style="{StaticResource ArloBubbleStyle}">
-                                                <Label
-                                                    Text="{Binding Text}"
-                                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
-                                                    FontSize="16"
-                                                    LineBreakMode="WordWrap" />
-                                            </Frame>
-                                        </Grid>
-                                    </DataTemplate>
-                                </helpers:ChatMessageTemplateSelector.ArloTemplate>
-
-                                <helpers:ChatMessageTemplateSelector.UserTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <Frame Style="{StaticResource UserBubbleStyle}">
-                                                <Label
-                                                    Text="{Binding Text}"
-                                                    FontSize="16"
-                                                    TextColor="#2E2E2E"
-                                                    LineBreakMode="WordWrap" />
-                                            </Frame>
-                                        </Grid>
-                                    </DataTemplate>
-                                </helpers:ChatMessageTemplateSelector.UserTemplate>
-
-                            </helpers:ChatMessageTemplateSelector>
-                        </BindableLayout.ItemTemplateSelector>
+                        <Label
+                            Text="Pick what fits, or tell me what’s going on."
+                            FontSize="12"
+                            Opacity="0.8"
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
                     </VerticalStackLayout>
 
-                </ScrollView>
+                </HorizontalStackLayout>
 
-            </Grid>
+                <CollectionView
+                    ItemsSource="{Binding QuickPrompts}"
+                    SelectionMode="None"
+                    HeightRequest="200"
+                    Margin="0,-4,0,4">
 
-        </Frame>
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout
+                            Orientation="Vertical"
+                            Span="2"
+                            HorizontalItemSpacing="8"
+                            VerticalItemSpacing="6" />
+                    </CollectionView.ItemsLayout>
 
-        <Frame
-            Grid.Row="2"
-            Style="{StaticResource CardFrameStyle}"
-            Padding="12">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
 
-            <VerticalStackLayout Spacing="8">
+                            <Frame
+                                Padding="10,6"
+                                CornerRadius="20"
+                                HasShadow="False"
+                                HeightRequest="42"
+                                BackgroundColor="{Binding Text, Converter={StaticResource ArloPromptColourConverter}}">
 
-                <Editor
-                    Placeholder="Tell Arlo what’s going on..."
-                    AutoSize="TextChanges"
-                    Text="{Binding UserInput}"
-                    MinimumHeightRequest="80" />
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
+                                        CommandParameter="{Binding Text}" />
+                                </Frame.GestureRecognizers>
 
-                <Button
-                    Text="Send"
-                    Style="{StaticResource PrimaryButtonStyle}"
-                    Command="{Binding SendMessageCommand}" />
+                                <HorizontalStackLayout
+                                    Spacing="4"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center">
 
-                <Button
-                    Text="Clear chat"
-                    Style="{StaticResource SecondaryButtonStyle}"
-                    Command="{Binding ClearChatCommand}" />
+                                    <Image
+                                        Source="{Binding Icon}"
+                                        HeightRequest="22"
+                                        WidthRequest="22"
+                                        VerticalOptions="Center"
+                                        Margin="0,0,2,0" />
+
+                                    <Label
+                                        Text="{Binding Text}"
+                                        FontSize="13"
+                                        TextColor="#2E2E2E"
+                                        LineBreakMode="TailTruncation"
+                                        VerticalTextAlignment="Center" />
+
+                                </HorizontalStackLayout>
+
+                            </Frame>
+
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                </CollectionView>
 
             </VerticalStackLayout>
 
-        </Frame>
+            <!-- Conversation -->
+            <Frame
+                Grid.Row="1"
+                Style="{StaticResource CardFrameStyle}"
+                Padding="12"
+                VerticalOptions="FillAndExpand"
+                IsVisible="{Binding AreQuickPromptsVisible, Converter={StaticResource InverseBoolConverter}}">
+
+                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+
+                    <Label
+                        Grid.Row="0"
+                        Text="Conversation"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                    <ScrollView
+                        x:Name="MessagesScrollView"
+                        Grid.Row="1">
+
+                        <VerticalStackLayout
+                            x:Name="MessagesStack"
+                            Spacing="12"
+                            BindableLayout.ItemsSource="{Binding Messages}">
+
+                            <BindableLayout.ItemTemplateSelector>
+                                <helpers:ChatMessageTemplateSelector>
+
+                                    <helpers:ChatMessageTemplateSelector.ArloTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4">
+
+                                                <Image
+                                                    Grid.Column="0"
+                                                    Source="arlo2.png"
+                                                    HeightRequest="60"
+                                                    WidthRequest="60"
+                                                    VerticalOptions="Start"
+                                                    Aspect="AspectFit" />
+
+                                                <Frame
+                                                    Grid.Column="1"
+                                                    Style="{StaticResource ArloBubbleStyle}"
+                                                    MaximumWidthRequest="280">
+
+                                                    <Label
+                                                        Text="{Binding Text}"
+                                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                                                        FontSize="16"
+                                                        LineBreakMode="WordWrap" />
+
+                                                </Frame>
+
+                                            </Grid>
+                                        </DataTemplate>
+                                    </helpers:ChatMessageTemplateSelector.ArloTemplate>
+
+                                    <helpers:ChatMessageTemplateSelector.UserTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="*,Auto">
+
+                                                <Frame
+                                                    Grid.Column="1"
+                                                    Style="{StaticResource UserBubbleStyle}"
+                                                    MaximumWidthRequest="280">
+
+                                                    <Label
+                                                        Text="{Binding Text}"
+                                                        FontSize="16"
+                                                        TextColor="#2E2E2E"
+                                                        LineBreakMode="WordWrap" />
+
+                                                </Frame>
+
+                                            </Grid>
+                                        </DataTemplate>
+                                    </helpers:ChatMessageTemplateSelector.UserTemplate>
+
+                                </helpers:ChatMessageTemplateSelector>
+                            </BindableLayout.ItemTemplateSelector>
+
+                        </VerticalStackLayout>
+
+                    </ScrollView>
+
+                </Grid>
+
+            </Frame>
+
+            <!-- Open Prompt Picker -->
+            <Button
+                Grid.Row="2"
+                Text="Pick something else"
+                FontSize="13"
+                Padding="12,6"
+                CornerRadius="18"
+                BackgroundColor="#B3CF99"
+                TextColor="#2E2E2E"
+                Command="{Binding ShowPromptsCommand}"
+                IsVisible="{Binding AreQuickPromptsVisible, Converter={StaticResource InverseBoolConverter}}" />    
+
+            <!-- Input -->
+            <Frame
+                Grid.Row="3"
+                Style="{StaticResource CardFrameStyle}"
+                Padding="12"
+                VerticalOptions="End">
+
+                <VerticalStackLayout Spacing="8">
+
+                    <Editor
+                        Placeholder="Tell Arlo what’s going on..."
+                        AutoSize="Disabled"
+                        Text="{Binding UserInput}"
+                        HeightRequest="70"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                    <Button
+                        Text="Send"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding SendMessageCommand}" />
+
+                    <Button
+                        Text="Clear chat"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding ClearChatCommand}" />
+
+                </VerticalStackLayout>
+
+            </Frame>
+
+        </Grid>
+
+        <!-- Prompt Picker Overlay -->
+        <Grid
+            BackgroundColor="#80000000"
+            IsVisible="{Binding ArePromptPickerVisible}"
+            InputTransparent="{Binding ArePromptPickerVisible, Converter={StaticResource InverseBoolConverter}}">   
+
+            <Frame
+                VerticalOptions="End"
+                Margin="20"
+                Padding="16"
+                CornerRadius="24"
+                Style="{StaticResource CardFrameStyle}">
+
+                <VerticalStackLayout Spacing="12">
+
+                    <Label
+                        Text="What fits now?"
+                        FontSize="18"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                    <Label
+                        Text="Pick another option and I’ll keep going from there."
+                        FontSize="13"
+                        Opacity="0.8"
+                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+
+                    <CollectionView
+                        ItemsSource="{Binding QuickPrompts}"
+                        SelectionMode="None"
+                        HeightRequest="200">
+
+                        <CollectionView.ItemsLayout>
+                            <GridItemsLayout
+                                Orientation="Vertical"
+                                Span="2"
+                                HorizontalItemSpacing="8"
+                                VerticalItemSpacing="6" />
+                        </CollectionView.ItemsLayout>
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+
+                                <Frame
+                                    Padding="10,6"
+                                    CornerRadius="20"
+                                    HasShadow="False"
+                                    HeightRequest="42"
+                                    BackgroundColor="{Binding Text, Converter={StaticResource ArloPromptColourConverter}}">
+
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
+                                            CommandParameter="{Binding Text}" />
+                                    </Frame.GestureRecognizers>
+
+                                    <HorizontalStackLayout
+                                        Spacing="4"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center">
+
+                                        <Image
+                                            Source="{Binding Icon}"
+                                            HeightRequest="22"
+                                            WidthRequest="22"
+                                            VerticalOptions="Center"
+                                            Margin="0,0,2,0" />
+
+                                        <Label
+                                            Text="{Binding Text}"
+                                            FontSize="13"
+                                            TextColor="#2E2E2E"
+                                            LineBreakMode="TailTruncation"
+                                            VerticalTextAlignment="Center" />
+
+                                    </HorizontalStackLayout>
+
+                                </Frame>
+
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+
+                    </CollectionView>
+
+                    <Button
+                        Text="Cancel"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding HidePromptPickerCommand}" />
+
+                </VerticalStackLayout>
+
+            </Frame>
+
+        </Grid>
 
     </Grid>
+
 </ContentPage>

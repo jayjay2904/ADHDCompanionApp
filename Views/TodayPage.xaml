@@ -152,6 +152,13 @@
                             Command="{Binding SaveNoteCommand}"
                             TextColor="#2E2E2E"
                             BackgroundColor="{StaticResource Primary}" />
+                        
+                        <Label
+                            Text="{Binding NoteStatusMessage}"
+                            FontSize="12"
+                            TextColor="{StaticResource CoralColor}"
+                            HorizontalOptions="Center"
+                            IsVisible="{Binding HasNoteStatus}" />  
 
                     </VerticalStackLayout>
 

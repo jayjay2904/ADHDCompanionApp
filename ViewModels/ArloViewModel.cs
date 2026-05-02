@@ -16,15 +16,21 @@ public partial class ArloViewModel : BaseViewModel
     [ObservableProperty]
     private bool areQuickPromptsVisible = true;
 
+    [ObservableProperty]
+    private bool arePromptPickerVisible;
     public ObservableCollection<ChatMessage> Messages { get; } = new();
 
-    public ObservableCollection<string> QuickPrompts { get; } = new()
-    {
-        "I'm overwhelmed",
-        "I can't start",
-        "I'm anxious",
-        "I'm tired"
-    };
+    public ObservableCollection<ArloPrompt> QuickPrompts { get; } = new()
+{
+    new() { Text = "I’m overwhelmed", Icon = "cloud.png" },
+    new() { Text = "I can’t start", Icon = "play.png" },
+    new() { Text = "I’m low energy", Icon = "battery.png" },
+    new() { Text = "I’m anxious", Icon = "spark.png" },
+    new() { Text = "I’m avoiding things", Icon = "eye_off.png" },
+    new() { Text = "There’s too much to do", Icon = "list.png" },
+    new() { Text = "I feel stuck", Icon = "pause.png" },
+    new() { Text = "I feel like I’ve failed", Icon = "heart.png" }
+};
 
     public ArloViewModel(IArloService arloService)
     {
@@ -34,6 +40,9 @@ public partial class ArloViewModel : BaseViewModel
 
     public async Task LoadMessagesAsync()
     {
+        if (Messages.Count > 0)
+            return;
+
         var savedMessages = await _arloService.GetMessagesAsync();
 
         Messages.Clear();
@@ -59,6 +68,18 @@ public partial class ArloViewModel : BaseViewModel
 
         AreQuickPromptsVisible = Messages.Count <= 1;
     }
+    
+    [RelayCommand]
+    private void ShowPrompts()
+    {
+        ArePromptPickerVisible = true;
+    }
+
+    [RelayCommand]
+    private void HidePromptPicker()
+    {
+        ArePromptPickerVisible = false;
+    }
 
     [RelayCommand]
     private async Task SendMessage()
@@ -81,32 +102,35 @@ public partial class ArloViewModel : BaseViewModel
         {
             return;
         }
-
+        ArePromptPickerVisible = false;
         await ProcessMessageAsync(prompt);
-    }
+
+        }
 
     [RelayCommand]
     private async Task ClearChat()
     {
+        ArePromptPickerVisible = false;
         await _arloService.ClearMessagesAsync();
+        Messages.Clear();
         await LoadMessagesAsync();
     }
 
     private async Task ProcessMessageAsync(string input)
     {
-        if (AreQuickPromptsVisible)
-        {
-            AreQuickPromptsVisible = false;
-        }
+        if (string.IsNullOrWhiteSpace(input))
+            return;
 
         var userMessage = new ChatMessage
         {
             Role = "User",
-            Text = input
+            Text = input.Trim()
         };
 
         Messages.Add(userMessage);
         await _arloService.AddMessageAsync(userMessage);
+
+        AreQuickPromptsVisible = false;
 
         await Task.Delay(400);
 

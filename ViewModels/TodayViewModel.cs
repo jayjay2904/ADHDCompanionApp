@@ -72,6 +72,12 @@ public partial class TodayViewModel : BaseViewModel
     [ObservableProperty]
     private bool isStrugglingSelected;
 
+    [ObservableProperty]
+    private string noteStatusMessage = string.Empty;
+
+    [ObservableProperty]
+    private bool hasNoteStatus;
+
     public ObservableCollection<WinEntry> RecentWins { get; } = new();
     public ObservableCollection<TaskItem> Tasks { get; } = new();
 
@@ -156,13 +162,15 @@ public partial class TodayViewModel : BaseViewModel
         {
             if (string.IsNullOrWhiteSpace(CheckInNote))
             {
-                StatusMessage = "Nothing to save yet.";
+                NoteStatusMessage = "Nothing to save yet.";
+                HasNoteStatus = true;
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(SelectedMood))
             {
-                StatusMessage = "Pick how you're feeling first.";
+                NoteStatusMessage = "Pick how you're feeling first.";
+                HasNoteStatus = true;
                 return;
             }
 
@@ -171,25 +179,34 @@ public partial class TodayViewModel : BaseViewModel
                 Mood = SelectedMood,
                 MoodScore = SelectedMoodScore,
                 MoodEmoji = SelectedMoodEmoji,
-
-                // Temporary mapping for older app code/database fields
                 EnergyLevel = SelectedMoodScore,
                 FocusLevel = SelectedMoodScore,
-
                 Note = CheckInNote.Trim(),
                 TimestampUtc = DateTime.UtcNow
             };
 
             await _checkInService.SaveCheckInAsync(checkIn);
 
-            StatusMessage = "Note saved.";
+            // ✅ Clear input 
+            CheckInNote = string.Empty;
+
+            // ✅ Local feedback
+            NoteStatusMessage = "Note saved - this helps us spot patterns over time..";
+            HasNoteStatus = true;
+
+            // Optional: refresh latest check-in
+            await LoadLatestCheckInAsync();
+
             await Task.Delay(2000);
-            StatusMessage = string.Empty;
+
+            HasNoteStatus = false;
+            NoteStatusMessage = string.Empty;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[TodayViewModel] SaveNote failed: {ex}");
-            StatusMessage = "Could not save note.";
+            NoteStatusMessage = "Could not save note.";
+            HasNoteStatus = true;
         }
     }
 
