@@ -12,6 +12,8 @@ public partial class ArloViewModel : BaseViewModel
 {
     private readonly IArloService _arloService;
 
+    private readonly ISpeechToTextService _speechToTextService;
+
     public event Action? ArloFinishedResponding;
 
     [ObservableProperty]
@@ -29,25 +31,25 @@ public partial class ArloViewModel : BaseViewModel
     public ObservableCollection<ChatMessage> Messages { get; } = new();
 
     public ObservableCollection<ArloPrompt> QuickPrompts { get; } = new()
-    {
-        new() { Text = "I’m overwhelmed", Icon = "cloud.png" },
-        new() { Text = "I can’t start", Icon = "play.png" },
-        new() { Text = "I’m low energy", Icon = "battery.png" },
-        new() { Text = "I’m anxious", Icon = "spark.png" },
-        new() { Text = "I’m avoiding things", Icon = "eye_off.png" },
-        new() { Text = "There’s too much to do", Icon = "list.png" },
-        new() { Text = "I feel stuck", Icon = "pause.png" },
-        new() { Text = "I feel like I’ve failed", Icon = "heart.png" }
-    };
+{
+    new() { Text = "I’m overwhelmed", Icon = "cloud.png" },
+    new() { Text = "I can’t start", Icon = "play.png" },
+    new() { Text = "I’m low energy", Icon = "battery.png" },
+    new() { Text = "I’m anxious", Icon = "spark.png" },
+    new() { Text = "I feel stuck", Icon = "pause.png" },
+    new() { Text = "I’m overstimulated", Icon = "spark.png" }
+};
 
     private readonly IUserProfileService _profileService;
 
     public ArloViewModel(
         IArloService arloService,
-        IUserProfileService profileService)
+        IUserProfileService profileService,
+        ISpeechToTextService speechToTextService)
     {
         _arloService = arloService;
         _profileService = profileService;
+        _speechToTextService = speechToTextService;
 
         Title = "Arlo";
 
@@ -144,6 +146,28 @@ public partial class ArloViewModel : BaseViewModel
         ArePromptPickerVisible = false;
 
         await ProcessMessageAsync(prompt);
+    }
+
+    [RelayCommand]
+    private async Task Listen()
+    {
+        try
+        {
+            var spokenText = await _speechToTextService.ListenAsync();
+
+            if (string.IsNullOrWhiteSpace(spokenText))
+                return;
+
+            UserInput = spokenText.Trim();
+
+            await Task.Delay(150);
+
+            await SendMessage();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ArloViewModel] Listen failed: {ex}");
+        }
     }
 
     [RelayCommand]

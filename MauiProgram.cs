@@ -70,8 +70,10 @@ namespace ADHDCompanionApp
             builder.Services.AddTransient<QuickSetupPage>();
             builder.Services.AddTransient<PreferencesPage>();
 
+
 #if ANDROID
             builder.Services.AddSingleton<IPlatformReminderScheduler, AndroidReminderScheduler>();
+            builder.Services.AddSingleton<ISpeechToTextService, AndroidSpeechToTextService>();
 #endif
 
 #if DEBUG
@@ -79,6 +81,8 @@ namespace ADHDCompanionApp
 #endif
 
             return builder.Build();
+
+
         }
     }
 }

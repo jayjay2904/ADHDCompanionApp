@@ -59,14 +59,14 @@
                     ItemsSource="{Binding QuickPrompts}"
                     SelectionMode="None"
                     HeightRequest="200"
-                    Margin="0,-4,0,4">
+                    Margin="0,8,0,20">  
 
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout
                             Orientation="Vertical"
                             Span="2"
-                            HorizontalItemSpacing="8"
-                            VerticalItemSpacing="6" />
+                            HorizontalItemSpacing="10"
+                            VerticalItemSpacing="10" /> 
                     </CollectionView.ItemsLayout>
 
                     <CollectionView.ItemTemplate>
@@ -76,33 +76,34 @@
                                 CornerRadius="20"
                                 HasShadow="False"
                                 HeightRequest="42"
-                                BackgroundColor="{Binding Text, Converter={StaticResource ArloPromptColourConverter}}">
+                                Margin="0,2"
+                                BackgroundColor="{Binding Text, Converter={StaticResource ArloPromptColourConverter}}"> 
 
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Tapped="OnQuickPromptTapped"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
-                                        CommandParameter="{Binding Text}" />
+                                        CommandParameter="{Binding Text}" />    
                                 </Frame.GestureRecognizers>
 
                                 <HorizontalStackLayout
                                     Spacing="4"
                                     HorizontalOptions="Center"
-                                    VerticalOptions="Center">
+                                    VerticalOptions="Center">   
 
                                     <Image
                                         Source="{Binding Icon}"
                                         HeightRequest="22"
                                         WidthRequest="22"
                                         VerticalOptions="Center"
-                                        Margin="0,0,2,0" />
+                                        Margin="0,0,2,0" /> 
 
                                     <Label
                                         Text="{Binding Text}"
-                                        FontSize="13"
+                                        FontSize="12"
                                         TextColor="#2E2E2E"
                                         LineBreakMode="TailTruncation"
-                                        VerticalTextAlignment="Center" />
+                                        VerticalTextAlignment="Center" />   
 
                                 </HorizontalStackLayout>
 
@@ -214,7 +215,7 @@
                 HasShadow="False"
                 VerticalOptions="End">  
 
-                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
 
                     <!-- Prompt picker button -->
                     <Button
@@ -242,11 +243,24 @@
                         Completed="OnUserInputCompleted"
                         BackgroundColor="Transparent"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
-                        PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />  
+                        PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
+                    
+                    <!-- Speech to text button  -->
+                    <Button
+                        Grid.Column="2"
+                        Text="🎤"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        CornerRadius="22"
+                        Padding="0"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                        FontSize="20"
+                        Command="{Binding ListenCommand}" />    
 
                     <!-- Send button -->
                     <Button
-                        Grid.Column="2"
+                        Grid.Column="3"
                         Text="➜"
                         WidthRequest="44"
                         HeightRequest="44"
