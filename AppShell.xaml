@@ -10,16 +10,16 @@
     Shell.TabBarForegroundColor="#FFFFFF">
 
     <TabBar x:Name="MainTabBar">
-        
-        <ShellContent
-            Title="Today"
-            Route="TodayPage"
-            ContentTemplate="{DataTemplate views:TodayPage}" />
 
         <ShellContent
             Title="Arlo"
             Route="ArloPage"
-            ContentTemplate="{DataTemplate views:ArloPage}" />
+            ContentTemplate="{DataTemplate views:ArloPage}" />  
+
+       <!-- <ShellContent
+            Title="Today"
+            Route="TodayPage"
+            ContentTemplate="{DataTemplate views:TodayPage}" />
 
         <ShellContent
             Title="Support"
@@ -29,6 +29,6 @@
         <ShellContent
             Title="Progress"
             Route="ProgressPage"
-            ContentTemplate="{DataTemplate views:ProgressPage}" />
+            ContentTemplate="{DataTemplate views:ProgressPage}" /> -->
     </TabBar>
 </Shell>

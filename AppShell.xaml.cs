@@ -19,8 +19,7 @@ public partial class AppShell : Shell
         _profileService = profileService;
         _serviceProvider = serviceProvider;
 
-        Routing.RegisterRoute(nameof(WelcomePage), typeof(WelcomePage));
-        Routing.RegisterRoute(nameof(QuickSetupPage), typeof(QuickSetupPage));
+        
         Routing.RegisterRoute(nameof(PreferencesPage), typeof(PreferencesPage));
     }
 
@@ -39,18 +38,18 @@ public partial class AppShell : Shell
     {
         try
         {
-            await UpdateNavigationForSetupStateAsync();
-
             var isOnboardingComplete = await _profileService.IsOnboardingCompleteAsync();
+
+            MainTabBar.IsVisible = isOnboardingComplete;
 
             if (!isOnboardingComplete)
             {
-                await GoToAsync(nameof(WelcomePage));
+                var quickSetupPage = _serviceProvider.GetRequiredService<QuickSetupPage>();
+                await Shell.Current.Navigation.PushAsync(quickSetupPage);
+                return;
             }
-            else
-            {
-                await GoToAsync("//TodayPage");
-            }
+
+            await GoToAsync("//ArloPage");
         }
         catch (Exception ex)
         {
@@ -60,7 +59,8 @@ public partial class AppShell : Shell
 
             try
             {
-                await GoToAsync(nameof(WelcomePage));
+                var quickSetupPage = _serviceProvider.GetRequiredService<QuickSetupPage>();
+                await Shell.Current.Navigation.PushAsync(quickSetupPage);
             }
             catch (Exception navEx)
             {

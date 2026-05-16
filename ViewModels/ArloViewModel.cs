@@ -3,12 +3,16 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.Services.Interfaces;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Dispatching;
 
 namespace ADHDCompanionApp.ViewModels;
 
 public partial class ArloViewModel : BaseViewModel
 {
     private readonly IArloService _arloService;
+
+    public event Action? ArloFinishedResponding;
 
     [ObservableProperty]
     private string userInput = string.Empty;
@@ -18,24 +22,53 @@ public partial class ArloViewModel : BaseViewModel
 
     [ObservableProperty]
     private bool arePromptPickerVisible;
+
+    [ObservableProperty]
+    private string greetingText = "Hi.";
+
     public ObservableCollection<ChatMessage> Messages { get; } = new();
 
     public ObservableCollection<ArloPrompt> QuickPrompts { get; } = new()
-{
-    new() { Text = "I’m overwhelmed", Icon = "cloud.png" },
-    new() { Text = "I can’t start", Icon = "play.png" },
-    new() { Text = "I’m low energy", Icon = "battery.png" },
-    new() { Text = "I’m anxious", Icon = "spark.png" },
-    new() { Text = "I’m avoiding things", Icon = "eye_off.png" },
-    new() { Text = "There’s too much to do", Icon = "list.png" },
-    new() { Text = "I feel stuck", Icon = "pause.png" },
-    new() { Text = "I feel like I’ve failed", Icon = "heart.png" }
-};
+    {
+        new() { Text = "I’m overwhelmed", Icon = "cloud.png" },
+        new() { Text = "I can’t start", Icon = "play.png" },
+        new() { Text = "I’m low energy", Icon = "battery.png" },
+        new() { Text = "I’m anxious", Icon = "spark.png" },
+        new() { Text = "I’m avoiding things", Icon = "eye_off.png" },
+        new() { Text = "There’s too much to do", Icon = "list.png" },
+        new() { Text = "I feel stuck", Icon = "pause.png" },
+        new() { Text = "I feel like I’ve failed", Icon = "heart.png" }
+    };
 
-    public ArloViewModel(IArloService arloService)
+    private readonly IUserProfileService _profileService;
+
+    public ArloViewModel(
+        IArloService arloService,
+        IUserProfileService profileService)
     {
         _arloService = arloService;
+        _profileService = profileService;
+
         Title = "Arlo";
+
+        LoadGreeting();
+    }
+    private async void LoadGreeting()
+    {
+        try
+        {
+            var profile = await _profileService.GetProfileAsync();
+
+            var name = string.IsNullOrWhiteSpace(profile?.Nickname)
+                ? "there"
+                : profile.Nickname.Trim();
+
+            GreetingText = $"Hi {name}.";
+        }
+        catch
+        {
+            GreetingText = "Hi.";
+        }
     }
 
     public async Task LoadMessagesAsync()
@@ -68,7 +101,7 @@ public partial class ArloViewModel : BaseViewModel
 
         AreQuickPromptsVisible = Messages.Count <= 1;
     }
-    
+
     [RelayCommand]
     private void ShowPrompts()
     {
@@ -85,8 +118,15 @@ public partial class ArloViewModel : BaseViewModel
     private async Task SendMessage()
     {
         if (string.IsNullOrWhiteSpace(UserInput))
-        {
             return;
+
+        try
+        {
+            HapticFeedback.Default.Perform(HapticFeedbackType.Click);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ArloViewModel] Send haptic failed: {ex}");
         }
 
         var currentInput = UserInput.Trim();
@@ -99,20 +139,22 @@ public partial class ArloViewModel : BaseViewModel
     private async Task SendQuickPrompt(string prompt)
     {
         if (string.IsNullOrWhiteSpace(prompt))
-        {
             return;
-        }
-        ArePromptPickerVisible = false;
-        await ProcessMessageAsync(prompt);
 
-        }
+        ArePromptPickerVisible = false;
+
+        await ProcessMessageAsync(prompt);
+    }
 
     [RelayCommand]
     private async Task ClearChat()
     {
         ArePromptPickerVisible = false;
+
         await _arloService.ClearMessagesAsync();
+
         Messages.Clear();
+
         await LoadMessagesAsync();
     }
 
@@ -127,7 +169,11 @@ public partial class ArloViewModel : BaseViewModel
             Text = input.Trim()
         };
 
-        Messages.Add(userMessage);
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            Messages.Add(userMessage);
+        });
+
         await _arloService.AddMessageAsync(userMessage);
 
         AreQuickPromptsVisible = false;
@@ -136,13 +182,59 @@ public partial class ArloViewModel : BaseViewModel
 
         var replyText = await _arloService.GetReplyAsync(input);
 
+        System.Diagnostics.Debug.WriteLine($"[Arlo] Reply text: '{replyText}'");
+
+        if (string.IsNullOrWhiteSpace(replyText))
+        {
+            replyText = "Yeah — I’m here. Let’s keep this tiny. Take one slow breath, then pick the smallest next step.";
+        }
+
         var arloReply = new ChatMessage
         {
+            Id = Guid.NewGuid().ToString(),
             Role = "Arlo",
-            Text = replyText
+            Text = string.Empty,
+            TimestampUtc = DateTime.UtcNow
         };
 
-        Messages.Add(arloReply);
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            Messages.Add(arloReply);
+        });
+
+        var words = replyText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var currentText = string.Empty;
+
+        foreach (var word in words)
+        {
+            currentText +=
+                (string.IsNullOrWhiteSpace(currentText) ? "" : " ")
+                + word;
+
+            var updatedMessage = new ChatMessage
+            {
+                Id = arloReply.Id,
+                Role = "Arlo",
+                Text = currentText,
+                TimestampUtc = arloReply.TimestampUtc
+            };
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                var index = Messages.IndexOf(arloReply);
+
+                if (index >= 0)
+                {
+                    Messages[index] = updatedMessage;
+                    arloReply = updatedMessage;
+                }
+            });
+
+            await Task.Delay(35);
+        }
+
         await _arloService.AddMessageAsync(arloReply);
+
+        ArloFinishedResponding?.Invoke();
     }
 }

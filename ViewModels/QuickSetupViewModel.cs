@@ -8,29 +8,20 @@ namespace ADHDCompanionApp.ViewModels;
 public partial class QuickSetupViewModel : BaseViewModel
 {
     private readonly IUserProfileService _profileService;
-    private readonly IReminderEngine _reminderEngine;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
     private string nickname = string.Empty;
 
     [ObservableProperty]
-    private bool usesMedicationSupport;
+    [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    private bool hasAcceptedDisclaimer;
 
-    [ObservableProperty]
-    private bool usesTaskSupport = true;
-
-    [ObservableProperty]
-    private TimeSpan reminderTime = new(9, 0, 0);
-
-    [ObservableProperty]
-    private DateTime medicationStartDate = DateTime.Today;
-
-    public QuickSetupViewModel(
-    IUserProfileService profileService,
-    IReminderEngine reminderEngine)
+    public QuickSetupViewModel(IUserProfileService profileService)
     {
         _profileService = profileService;
-        _reminderEngine = reminderEngine;
+        Title = "Quick Setup";
+
         LoadExistingProfile();
     }
 
@@ -42,93 +33,58 @@ public partial class QuickSetupViewModel : BaseViewModel
             return;
 
         Nickname = profile.Nickname;
-        UsesMedicationSupport = profile.UsesMedicationSupport;
-        UsesTaskSupport = profile.UsesTaskSupport;
-        ReminderTime = profile.MedicationReminderTime ?? new TimeSpan(9, 0, 0);
-        MedicationStartDate = profile.MedicationStartDate ?? DateTime.Today;
     }
 
-    [RelayCommand]
+    private bool CanSave()
+    {
+        return !string.IsNullOrWhiteSpace(Nickname)
+               && HasAcceptedDisclaimer;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task Save()
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(Nickname))
-            {
-                await Shell.Current.DisplayAlert("Just one thing", "Please tell me what to call you.", "OK");
-                return;
-            }
+            var existingProfile = await _profileService.GetProfileAsync();
 
             var profile = new UserProfile
             {
+                Id = existingProfile?.Id ?? Guid.NewGuid().ToString(),
                 Nickname = Nickname.Trim(),
-                UsesMedicationSupport = UsesMedicationSupport,
-                UsesTaskSupport = UsesTaskSupport,
-                MedicationReminderTime = UsesMedicationSupport ? ReminderTime : null,
-                MedicationStartDate = UsesMedicationSupport ? MedicationStartDate : null,
+
+                PreferredTone = existingProfile?.PreferredTone ?? string.Empty,
+                ReminderStyle = existingProfile?.ReminderStyle ?? string.Empty,
+
+                UsesMedicationSupport = existingProfile?.UsesMedicationSupport ?? false,
+                UsesTaskSupport = existingProfile?.UsesTaskSupport ?? true,
+
+                MedicationReminderTime = existingProfile?.MedicationReminderTime,
+                MedicationStartDate = existingProfile?.MedicationStartDate,
+
+                CreatedUtc = existingProfile?.CreatedUtc ?? DateTime.UtcNow,
                 UpdatedUtc = DateTime.UtcNow
             };
 
             await _profileService.SaveProfileAsync(profile);
-            Preferences.Set("IsOnboardingComplete", true);
 
+            Preferences.Set("HasAcceptedDisclaimer", true);
+            Preferences.Set("IsOnboardingComplete", true);
 
             if (Shell.Current is AppShell shell)
             {
                 await shell.UpdateNavigationForSetupStateAsync();
-                await shell.GoToAsync("//TodayPage");
-            }
-
-
-#if ANDROID
-            if (UsesMedicationSupport && profile.MedicationReminderTime.HasValue && profile.MedicationStartDate.HasValue)
-            {
-                var notificationPermission = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
-
-                if (notificationPermission != PermissionStatus.Granted)
-                {
-                    notificationPermission = await Permissions.RequestAsync<Permissions.PostNotifications>();
-                }
-
-                if (notificationPermission != PermissionStatus.Granted)
-                {
-                    await Shell.Current.DisplayAlert(
-                        "Notifications are off",
-                        "Medication reminders need notification permission before Arlo can send them.",
-                        "OK");
-
-                    await _reminderEngine.CancelMedicationReminderAsync();
-                    return;
-                }
-
-                var canScheduleExact = await _reminderEngine.CanScheduleExactRemindersAsync();
-
-                if (!canScheduleExact)
-                {
-                    var openSettings = await Shell.Current.DisplayAlert(
-                        "More accurate reminders",
-                        "Android may delay medication reminders unless 'Alarms & reminders' is enabled for this app. Open settings now?",
-                        "Open settings",
-                        "Not now");
-
-                    if (openSettings)
-                    {
-                        await _reminderEngine.OpenExactReminderSettingsAsync();
-                    }
-                }
-
-                await _reminderEngine.ScheduleMedicationReminderAsync(profile);
+                await shell.GoToAsync("//ArloPage");
             }
             else
             {
-                await _reminderEngine.CancelMedicationReminderAsync();
+                await Shell.Current.GoToAsync("//ArloPage");
             }
-#endif
-            await Shell.Current.GoToAsync("//TodayPage");
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[QuickSetup] Save failed: {ex}");
+
             await Shell.Current.DisplayAlert(
                 "Something went wrong",
                 "I couldn't save your setup properly. Please try again.",

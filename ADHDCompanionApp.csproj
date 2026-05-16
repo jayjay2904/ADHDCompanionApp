@@ -49,10 +49,10 @@
 
 	<ItemGroup>
 		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" />
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" BaseSize="32,32" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1F2A44" BaseSize="512,512" />
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1F2A44" BaseSize="768,768" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />
@@ -90,9 +90,7 @@
 	  <Compile Update="Views\QuickSetupPage.xaml.cs">
 	    <DependentUpon>QuickSetupPage.xaml</DependentUpon>
 	  </Compile>
-	  <Compile Update="Views\WelcomePage.xaml.cs">
-	    <DependentUpon>WelcomePage.xaml</DependentUpon>
-	  </Compile>
+	  
 	</ItemGroup>
 
 	<ItemGroup>
@@ -117,9 +115,7 @@
 	  <MauiXaml Update="Views\QuickSetupPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="Views\WelcomePage.xaml">
-	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
+	 
 	</ItemGroup>
 
 	<ItemGroup>

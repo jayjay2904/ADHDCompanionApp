@@ -3,8 +3,8 @@
     x:Class="ADHDCompanionApp.Views.QuickSetupPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="Quick Setup">
-    
+    Title="Arlo Setup">
+
     <Shell.BackButtonBehavior>
         <BackButtonBehavior IsVisible="False" />
     </Shell.BackButtonBehavior>
@@ -12,60 +12,74 @@
     <ScrollView>
         <VerticalStackLayout Padding="30" Spacing="20">
 
+            <Image
+                Source="arlo_main.png"
+                HeightRequest="150"
+                WidthRequest="150"
+                HorizontalOptions="Center"
+                Aspect="AspectFit" />   
+
             <Label
-                Text="Quick Setup"
-                FontSize="24"
+                Text="Hi, I’m Arlo. What’s your name?"
+                FontSize="26"
                 FontAttributes="Bold"
-                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                HorizontalTextAlignment="Center"
+                HorizontalOptions="Center"
+                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" /> 
 
             <Frame Style="{StaticResource CardFrameStyle}">
-                <VerticalStackLayout Spacing="16">
-
-                    <Entry
-                        Placeholder="Your name"
-                        Text="{Binding Nickname}" />
+                <VerticalStackLayout Spacing="18">
 
                     <VerticalStackLayout Spacing="8">
                         <Label
-                            Text="Do you want medication reminders?"
+                            Text="What should Arlo call you?"
+                            FontAttributes="Bold"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
-                        <Switch
-                            IsToggled="{Binding UsesMedicationSupport}"
-                            ThumbColor="{StaticResource Primary}"
-                            OnColor="{StaticResource Primary}" />
+                        <Entry
+                            Placeholder="Your name or nickname"
+                            Text="{Binding Nickname}"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                            PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout
-                        IsVisible="{Binding UsesMedicationSupport}"
-                        Spacing="10">
+                    <Frame
+                        Padding="14"
+                        CornerRadius="18"
+                        HasShadow="False"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceAltLight}, Dark={StaticResource SurfaceAltDark}}"
+                        BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}">
+
+                        <VerticalStackLayout Spacing="10">
+
+                            <Label
+                                Text="A quick note"
+                                FontAttributes="Bold"
+                                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                            <Label
+                                Text="Arlo is here to offer gentle support, reflection, and practical next steps. Arlo is not a medical, mental health, or emergency service. If you feel at risk of harm or need urgent help, contact emergency services or a trusted person immediately."
+                                FontSize="13"
+                                LineBreakMode="WordWrap"
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <HorizontalStackLayout Spacing="10">
+                        <CheckBox
+                            IsChecked="{Binding HasAcceptedDisclaimer}"
+                            Color="{StaticResource Primary}"
+                            VerticalOptions="Start" />
 
                         <Label
-                            Text="What time would you like your reminder?"
-                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
-
-                        <TimePicker
-                            Time="{Binding ReminderTime}" />
-
-                        <Label
-                            Text="When should reminders start?"
-                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
-
-                        <DatePicker
-                            Date="{Binding MedicationStartDate}" />
-
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="8">
-                        <Label
-                            Text="Do you want task support?"
+                            Text="I understand that Arlo is not a replacement for professional or emergency support."
+                            FontSize="13"
+                            LineBreakMode="WordWrap"
+                            HorizontalOptions="FillAndExpand"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-
-                        <Switch
-                            IsToggled="{Binding UsesTaskSupport}"
-                            ThumbColor="{StaticResource Primary}"
-                            OnColor="{StaticResource Primary}" />
-                    </VerticalStackLayout>
+                    </HorizontalStackLayout>
 
                     <Button
                         Text="Continue"

@@ -21,8 +21,7 @@
 
     <Grid>
 
-        <!-- Main Page Layout -->
-        <Grid RowDefinitions="Auto,*,Auto,Auto" Padding="20" RowSpacing="8">
+        <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="8">
 
             <!-- Header + First-Time Quick Prompts -->
             <VerticalStackLayout
@@ -41,7 +40,7 @@
                     <VerticalStackLayout Spacing="2" VerticalOptions="Center">
 
                         <Label
-                            Text="Hi, I’m Arlo"
+                            Text="{Binding GreetingText}"
                             FontSize="28"
                             FontAttributes="Bold"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
@@ -72,7 +71,6 @@
 
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-
                             <Frame
                                 Padding="10,6"
                                 CornerRadius="20"
@@ -82,6 +80,7 @@
 
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer
+                                        Tapped="OnQuickPromptTapped"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
                                         CommandParameter="{Binding Text}" />
                                 </Frame.GestureRecognizers>
@@ -108,7 +107,6 @@
                                 </HorizontalStackLayout>
 
                             </Frame>
-
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
 
@@ -206,45 +204,63 @@
 
             </Frame>
 
-            <!-- Open Prompt Picker -->
-            <Button
-                Grid.Row="2"
-                Text="Pick something else"
-                FontSize="13"
-                Padding="12,6"
-                CornerRadius="18"
-                BackgroundColor="#B3CF99"
-                TextColor="#2E2E2E"
-                Command="{Binding ShowPromptsCommand}"
-                IsVisible="{Binding AreQuickPromptsVisible, Converter={StaticResource InverseBoolConverter}}" />    
-
-            <!-- Input -->
+            <!-- Chat-style Input -->
             <Frame
-                Grid.Row="3"
-                Style="{StaticResource CardFrameStyle}"
-                Padding="12"
-                VerticalOptions="End">
+                Grid.Row="2"
+                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
+                BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
+                CornerRadius="28"
+                Padding="8"
+                HasShadow="False"
+                VerticalOptions="End">  
 
-                <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
 
-                    <Editor
-                        Placeholder="Tell Arlo what’s going on..."
-                        AutoSize="Disabled"
+                    <!-- Prompt picker button -->
+                    <Button
+                        Grid.Column="0"
+                        Text="+"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        CornerRadius="22"
+                        Padding="0"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                        FontSize="26"
+                        FontAttributes="Bold"
+                        Command="{Binding ShowPromptsCommand}"
+                        Pressed="OnPromptPlusPressed"
+                        Released="OnPromptPlusReleased" />  
+
+                    <!-- Text input -->
+                    <Entry
+                        x:Name="UserInputEntry"
+                        Grid.Column="1"
+                        Placeholder="What’s going on?"
                         Text="{Binding UserInput}"
-                        HeightRequest="70"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                        ReturnType="Send"
+                        Completed="OnUserInputCompleted"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                        PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />  
 
+                    <!-- Send button -->
                     <Button
-                        Text="Send"
-                        Style="{StaticResource PrimaryButtonStyle}"
-                        Command="{Binding SendMessageCommand}" />
+                        Grid.Column="2"
+                        Text="➜"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        CornerRadius="22"
+                        Padding="0"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="#F5F1E8"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        Command="{Binding SendMessageCommand}"
+                        Pressed="OnSendButtonPressed"
+                        Released="OnSendButtonReleased" />  
 
-                    <Button
-                        Text="Clear chat"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding ClearChatCommand}" />
-
-                </VerticalStackLayout>
+                </Grid>
 
             </Frame>
 
@@ -254,7 +270,7 @@
         <Grid
             BackgroundColor="#80000000"
             IsVisible="{Binding ArePromptPickerVisible}"
-            InputTransparent="{Binding ArePromptPickerVisible, Converter={StaticResource InverseBoolConverter}}">   
+            InputTransparent="{Binding ArePromptPickerVisible, Converter={StaticResource InverseBoolConverter}}">
 
             <Frame
                 VerticalOptions="End"
@@ -292,7 +308,6 @@
 
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-
                                 <Frame
                                     Padding="10,6"
                                     CornerRadius="20"
@@ -302,6 +317,7 @@
 
                                     <Frame.GestureRecognizers>
                                         <TapGestureRecognizer
+                                            Tapped="OnQuickPromptTapped"
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
                                             CommandParameter="{Binding Text}" />
                                     </Frame.GestureRecognizers>
@@ -328,7 +344,6 @@
                                     </HorizontalStackLayout>
 
                                 </Frame>
-
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
 
@@ -338,6 +353,11 @@
                         Text="Cancel"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Command="{Binding HidePromptPickerCommand}" />
+
+                    <Button
+                        Text="Clear chat"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding ClearChatCommand}" />
 
                 </VerticalStackLayout>
 

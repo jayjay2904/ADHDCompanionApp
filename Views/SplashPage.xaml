@@ -16,8 +16,8 @@
 
             <Image
                 Source="splash.svg"
-                WidthRequest="180"
-                HeightRequest="180"
+                WidthRequest="1024"
+                HeightRequest="512"
                 Aspect="AspectFit" />
 
             <Label
