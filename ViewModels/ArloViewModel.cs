@@ -34,10 +34,10 @@ public partial class ArloViewModel : BaseViewModel
 {
     new() { Text = "I’m overwhelmed", Icon = "cloud.png" },
     new() { Text = "I can’t start", Icon = "play.png" },
-    new() { Text = "I’m low energy", Icon = "battery.png" },
-    new() { Text = "I’m anxious", Icon = "spark.png" },
+    new() { Text = "I’ve low energy", Icon = "battery.png" },
+    new() { Text = "I’m anxious", Icon = "anxious.png" },
     new() { Text = "I feel stuck", Icon = "pause.png" },
-    new() { Text = "I’m overstimulated", Icon = "spark.png" }
+    new() { Text = "I’m overstimulated", Icon = "list.png" }
 };
 
     private readonly IUserProfileService _profileService;
@@ -65,12 +65,73 @@ public partial class ArloViewModel : BaseViewModel
                 ? "there"
                 : profile.Nickname.Trim();
 
-            GreetingText = $"Hi {name}.";
+            var now = DateTime.UtcNow;
+
+            var lastOpenedString = Preferences.Get("LastOpenedUtc", string.Empty);
+
+            DateTime? lastOpened = null;
+
+            if (DateTime.TryParse(lastOpenedString, out var parsed))
+            {
+                lastOpened = parsed;
+            }
+
+            Preferences.Set("LastOpenedUtc", now.ToString("O"));
+
+            GreetingText = BuildGreeting(name, now, lastOpened);
         }
         catch
         {
             GreetingText = "Hi.";
         }
+    }
+
+    private static string BuildGreeting(string name, DateTime nowUtc, DateTime? lastOpenedUtc)
+    {
+        var localHour = DateTime.Now.Hour;
+
+        var firstName = name.Split(' ')[0];
+
+        // First ever launch
+        if (lastOpenedUtc is null)
+        {
+            return $"Hi {firstName}.";
+        }
+
+        var gap = nowUtc - lastOpenedUtc.Value;
+
+        // Recently returned
+        if (gap.TotalHours < 3)
+        {
+            return $"Hey {firstName}. Still here with you.";
+        }
+
+        // Same day return
+        if (gap.TotalHours < 24)
+        {
+            return $"Hey {firstName}. Glad you’re back.";
+        }
+
+        // Few days away
+        if (gap.TotalDays >= 2)
+        {
+            return $"Hey {firstName}. No pressure. Let’s just start where you are.";
+        }
+
+        // Morning
+        if (localHour < 12)
+        {
+            return $"Morning {firstName}. How’s your brain feeling today?";
+        }
+
+        // Evening
+        if (localHour >= 18)
+        {
+            return $"Hey {firstName}. You don’t need to have everything figured out tonight.";
+        }
+
+        // Default
+        return $"Hi {firstName}.";
     }
 
     public async Task LoadMessagesAsync()
