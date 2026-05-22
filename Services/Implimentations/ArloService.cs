@@ -10,6 +10,7 @@ public class ArloService : IArloService
     private readonly IArloAiClient _arloAiClient;
     private readonly List<ChatMessage> _messages = new();
     private readonly Dictionary<string, int> _lastResponseIndex = new();
+    private readonly Queue<string> _recentModes = new();
 
     private readonly Dictionary<string, List<ArloResponse>> _responses = new()
     {
@@ -132,17 +133,22 @@ public class ArloService : IArloService
             OpenTasks = unfinishedTasks
                 .Take(3)
                 .Select(t => t.Title)
-                .ToList()
+                .ToList(),
+            RecentModes = _recentModes.ToList()
         };
 
-        // AI stays parked for now.
-        // var aiReply = await _arloAiClient.GetReplyAsync(aiRequest);
-        // if (!string.IsNullOrWhiteSpace(aiReply))
-        // {
-        //     return aiReply;
-        // }
+        // AI responses.
+        var aiReply = await _arloAiClient.GetReplyAsync(aiRequest);
+
+        if (!string.IsNullOrWhiteSpace(aiReply))
+        {
+            return aiReply;
+        }
+        // If AI is slow, offline, or unavailable, continue with local Arlo support.
+        // The user should never see technical failure wording.
 
         var state = DetectState(message);
+        TrackRecentMode(state);
 
         if (_responses.TryGetValue(state, out var stateResponses))
         {
@@ -170,7 +176,18 @@ public class ArloService : IArloService
 
         return GetDefaultReply(emotionalContext, unfinishedTasks);
     }
+    private void TrackRecentMode(string mode)
+    {
+        if (string.IsNullOrWhiteSpace(mode) || mode == "default")
+            return;
 
+        _recentModes.Enqueue(mode);
+
+        while (_recentModes.Count > 3)
+        {
+            _recentModes.Dequeue();
+        }
+    }
     private static string DetectState(string message)
     {
         if (message.Contains("overstimulated") ||

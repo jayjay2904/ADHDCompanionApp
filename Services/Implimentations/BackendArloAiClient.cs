@@ -1,11 +1,13 @@
 using System.Net.Http.Json;
 using ADHDCompanionApp.Services.Interfaces;
+using System.Diagnostics;
 
 namespace ADHDCompanionApp.Services.Implementations;
 
 public class BackendArloAiClient : IArloAiClient
 {
     private readonly HttpClient _httpClient;
+    private const int AiTimeoutMilliseconds = 5000;
 
     public BackendArloAiClient(HttpClient httpClient)
     {
@@ -16,15 +18,29 @@ public class BackendArloAiClient : IArloAiClient
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("api/arlo/chat", new
+            var requestTask = _httpClient.PostAsJsonAsync("api/arlo/chat", new
             {
                 message = request.UserMessage,
                 emotionalContext = request.EmotionalContext,
-                openTasks = request.OpenTasks
+                openTasks = request.OpenTasks,
+                recentModes = request.RecentModes
             });
+
+            var timeoutTask = Task.Delay(AiTimeoutMilliseconds);
+
+            var completedTask = await Task.WhenAny(requestTask, timeoutTask);
+
+            if (completedTask == timeoutTask)
+            {
+                Debug.WriteLine("Arlo AI timed out. Falling back to local support.");
+                return null;
+            }
+
+            var response = await requestTask;
 
             if (!response.IsSuccessStatusCode)
             {
+                Debug.WriteLine($"Arlo AI backend returned: {response.StatusCode}");
                 return null;
             }
 
@@ -32,8 +48,9 @@ public class BackendArloAiClient : IArloAiClient
 
             return result?.Reply;
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"Arlo AI client error: {ex.Message}");
             return null;
         }
     }

@@ -50,7 +50,7 @@ namespace ADHDCompanionApp
             builder.Services.AddSingleton(new HttpClient
             {
                 BaseAddress = new Uri("http://192.168.4.221:5276/"),
-                Timeout = TimeSpan.FromSeconds(10)
+                Timeout = TimeSpan.FromSeconds(45)
             });
 
             builder.Services.AddSingleton<IArloAiClient, BackendArloAiClient>();

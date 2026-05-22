@@ -10,4 +10,5 @@ public class ArloAiRequest
     public string UserMessage { get; set; } = string.Empty;
     public string EmotionalContext { get; set; } = string.Empty;
     public List<string> OpenTasks { get; set; } = new();
+    public List<string> RecentModes { get; set; } = new();
 }
