@@ -660,7 +660,7 @@ public partial class TodayViewModel : BaseViewModel
             3 => "Let’s keep it simple. Pick one task you can finish in five minutes.",
             2 => "Go gentle. Choose the smallest possible step, even if it feels ridiculously easy.",
             1 => "No pressure today. Start with something kind to your nervous system: water, food, movement, or a reset.",
-            _ => "Pick one small thing. Tiny steps still count."
+            _ => "Pick one small thing. Small steps still count."
         };
     }
 

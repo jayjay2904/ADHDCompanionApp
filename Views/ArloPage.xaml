@@ -15,8 +15,13 @@
         <ToolbarItem
             IconImageSource="gear.svg"
             Order="Primary"
-            Priority="0"
+            Priority="1"
             Clicked="OnPreferencesClicked" />
+        <ToolbarItem
+            Text="Progress"
+            Order="Primary"
+            Priority="0"
+            Command="{Binding ShowProgressCommand}" />  
     </ContentPage.ToolbarItems>
 
     <Grid>
@@ -130,12 +135,16 @@
 
                 <Grid RowDefinitions="Auto,*" RowSpacing="8">
 
-                    <Label
-                        Grid.Row="0"
-                        Text="Conversation"
-                        FontSize="16"
-                        FontAttributes="Bold"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+
+                        <Label
+                            Grid.Column="0"
+                            Text="Conversation"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            VerticalOptions="Center"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                    </Grid>
 
                     <ScrollView
                         x:Name="MessagesScrollView"
@@ -151,20 +160,20 @@
 
                                     <helpers:ChatMessageTemplateSelector.ArloTemplate>
                                         <DataTemplate>
-                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="4">
+                                            <Grid ColumnDefinitions="52,8*" ColumnSpacing="6">
 
                                                 <Image
                                                     Grid.Column="0"
                                                     Source="arlo2.png"
-                                                    HeightRequest="60"
-                                                    WidthRequest="60"
+                                                    HeightRequest="70"
+                                                    WidthRequest="70"
                                                     VerticalOptions="Start"
                                                     Aspect="AspectFit" />
 
                                                 <Frame
                                                     Grid.Column="1"
                                                     Style="{StaticResource ArloBubbleStyle}"
-                                                    MaximumWidthRequest="280">
+                                                    HorizontalOptions="Fill">  
 
                                                     <Label
                                                         Text="{Binding Text}"
@@ -180,12 +189,12 @@
 
                                     <helpers:ChatMessageTemplateSelector.UserTemplate>
                                         <DataTemplate>
-                                            <Grid ColumnDefinitions="*,Auto">
+                                            <Grid ColumnDefinitions="2*,8*">
 
                                                 <Frame
                                                     Grid.Column="1"
                                                     Style="{StaticResource UserBubbleStyle}"
-                                                    MaximumWidthRequest="280">
+                                                    HorizontalOptions="End">
 
                                                     <Label
                                                         Text="{Binding Text}"

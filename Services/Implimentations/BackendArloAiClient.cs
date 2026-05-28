@@ -23,7 +23,8 @@ public class BackendArloAiClient : IArloAiClient
                 message = request.UserMessage,
                 emotionalContext = request.EmotionalContext,
                 openTasks = request.OpenTasks,
-                recentModes = request.RecentModes
+                recentModes = request.RecentModes,
+                recentChat = request.RecentChat
             });
 
             var timeoutTask = Task.Delay(AiTimeoutMilliseconds);

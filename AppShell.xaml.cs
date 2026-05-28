@@ -10,6 +10,7 @@ public partial class AppShell : Shell
     private readonly IServiceProvider _serviceProvider;
     private bool _hasInitialised;
     private bool _isResettingTab;
+    
 
 
     public AppShell(IUserProfileService profileService, IServiceProvider serviceProvider)
@@ -21,6 +22,7 @@ public partial class AppShell : Shell
 
         
         Routing.RegisterRoute(nameof(PreferencesPage), typeof(PreferencesPage));
+        Routing.RegisterRoute(nameof(ProgressSummaryPopup), typeof(ProgressSummaryPopup));
     }
 
     protected override async void OnAppearing()
@@ -95,46 +97,5 @@ public partial class AppShell : Shell
             MainTabBar.IsVisible = false;
         }
     }
-    
-    protected override async void OnNavigated(ShellNavigatedEventArgs args)
-    {
-        base.OnNavigated(args);
-
-        if (_isResettingTab)
-            return;
-
-        try
-        {
-            var location = args.Current.Location.OriginalString;
-
-            if (location.Contains("PreferencesPage"))
-                return;
-
-            if (location.Contains("TodayPage/") ||
-                location.Contains("ArloPage/") ||
-                location.Contains("SupportPage/") ||
-                location.Contains("ProgressPage/"))
-            {
-                _isResettingTab = true;
-
-                if (location.Contains("TodayPage"))
-                    await Shell.Current.GoToAsync("//TodayPage");
-                else if (location.Contains("ArloPage"))
-                    await Shell.Current.GoToAsync("//ArloPage");
-                else if (location.Contains("SupportPage"))
-                    await Shell.Current.GoToAsync("//SupportPage");
-                else if (location.Contains("ProgressPage"))
-                    await Shell.Current.GoToAsync("//ProgressPage");
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"[AppShell] Tab reset failed: {ex}");
-        }
-        finally
-        {
-            _isResettingTab = false;
-        }
-    }
-
+   
 }

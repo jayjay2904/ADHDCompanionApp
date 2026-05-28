@@ -1,10 +1,15 @@
-using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.Services.Interfaces;
+using ADHDCompanionApp.Views;
+using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Dispatching;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+using CommunityToolkit.Maui.Views;
 
 namespace ADHDCompanionApp.ViewModels;
 
@@ -13,6 +18,7 @@ public partial class ArloViewModel : BaseViewModel
     private readonly IArloService _arloService;
 
     private readonly ISpeechToTextService _speechToTextService;
+    private readonly IServiceProvider _serviceProvider;
 
     public event Action? ArloFinishedResponding;
 
@@ -27,6 +33,9 @@ public partial class ArloViewModel : BaseViewModel
 
     [ObservableProperty]
     private string greetingText = "Hi.";
+
+    public ICommand ShowProgressCommand { get; }
+    private bool _isOpeningProgress;
 
     public ObservableCollection<ChatMessage> Messages { get; } = new();
 
@@ -45,16 +54,21 @@ public partial class ArloViewModel : BaseViewModel
     public ArloViewModel(
         IArloService arloService,
         IUserProfileService profileService,
-        ISpeechToTextService speechToTextService)
+        ISpeechToTextService speechToTextService,
+        IServiceProvider serviceProvider)
     {
         _arloService = arloService;
         _profileService = profileService;
         _speechToTextService = speechToTextService;
+        _serviceProvider = serviceProvider;
+        //ShowProgressCommand = new Command(async () => await ShowProgressAsync());
+        ShowProgressCommand = new Command(ShowProgress);
 
         Title = "Arlo";
 
         LoadGreeting();
     }
+    
     private async void LoadGreeting()
     {
         try
@@ -271,7 +285,7 @@ public partial class ArloViewModel : BaseViewModel
 
         if (string.IsNullOrWhiteSpace(replyText))
         {
-            replyText = "Yeah — I’m here. Let’s keep this tiny. Take one slow breath, then pick the smallest next step.";
+            replyText = "Yeah — I’m here. Let’s keep this small. Take one slow breath, then pick the smallest next step.";
         }
 
         var arloReply = new ChatMessage
@@ -321,5 +335,11 @@ public partial class ArloViewModel : BaseViewModel
         await _arloService.AddMessageAsync(arloReply);
 
         ArloFinishedResponding?.Invoke();
+    }
+    private void ShowProgress()
+    {
+        var popup = _serviceProvider.GetRequiredService<ProgressSummaryPopup>();
+
+        Shell.Current.CurrentPage.ShowPopup(popup);
     }
 }

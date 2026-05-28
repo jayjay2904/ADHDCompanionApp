@@ -1,5 +1,6 @@
 using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.Services.Interfaces;
+using System.Diagnostics;
 
 namespace ADHDCompanionApp.Services.Implementations;
 
@@ -8,16 +9,21 @@ public class ArloService : IArloService
     private readonly ICheckInService _checkInService;
     private readonly ITaskService _taskService;
     private readonly IArloAiClient _arloAiClient;
+    private readonly IWinService _winService;
+
     private readonly List<ChatMessage> _messages = new();
     private readonly Dictionary<string, int> _lastResponseIndex = new();
     private readonly Queue<string> _recentModes = new();
+
+    private DateTime? _lastAutoCheckInUtc;
+    private DateTime? _lastAutoWinUtc;
 
     private readonly Dictionary<string, List<ArloResponse>> _responses = new()
     {
         ["overwhelmed"] = new()
         {
             new ArloResponse { Validation = "Yeah… that feeling when everything piles up is a lot.", Action = "Let’s shrink it. Pick one small thing — not the most important, just the easiest.", NextStep = "If that feels okay, ignore everything else for now." },
-            new ArloResponse { Validation = "That sounds like overload, not failure.", Action = "Take 30 seconds and just look at what’s in front of you.", NextStep = "You don’t need to solve the whole day. Just the next tiny bit." },
+            new ArloResponse { Validation = "That sounds like overload, not failure.", Action = "Take 30 seconds and just look at what’s in front of you.", NextStep = "You don’t need to solve the whole day. Just the next small bit." },
             new ArloResponse { Validation = "No wonder your brain feels full. Too many open loops can feel brutal.", Action = "Write down one thing that’s shouting loudest in your head.", NextStep = "Then we can make that one thing smaller." }
         },
 
@@ -25,13 +31,13 @@ public class ArloService : IArloService
         {
             new ArloResponse { Validation = "That stuck-at-the-start feeling is horrible.", Action = "Open what you need and just sit with it for 30 seconds.", NextStep = "If that feels okay, do the tiniest version of it." },
             new ArloResponse { Validation = "Starting can feel bigger than the task itself.", Action = "Don’t start the task. Just prepare the first thing you need.", NextStep = "That counts as movement." },
-            new ArloResponse { Validation = "Your brain isn’t being lazy. It’s struggling to find the entry point.", Action = "Make the first step ridiculously small.", NextStep = "Tiny counts. Tiny is how we get moving." }
+            new ArloResponse { Validation = "Your brain isn’t being lazy. It’s struggling to find the entry point.", Action = "Make the first step ridiculously small.", NextStep = "small counts. small is how we get moving." }
         },
 
         ["low_energy"] = new()
         {
             new ArloResponse { Validation = "Low energy days hit differently.", Action = "Pick something so small it feels almost silly.", NextStep = "Today isn’t about pushing. It’s about easing in." },
-            new ArloResponse { Validation = "Your battery sounds low, so we lower the expectation.", Action = "Choose one gentle thing: drink water, stand up, or clear one tiny space.", NextStep = "That is enough for now." },
+            new ArloResponse { Validation = "Your battery sounds low, so we lower the expectation.", Action = "Choose one gentle thing: drink water, stand up, or clear one small space.", NextStep = "That is enough for now." },
             new ArloResponse { Validation = "This doesn’t sound like a power-through moment.", Action = "Do one thing that helps Future You by 1%.", NextStep = "Small support still counts." }
         },
 
@@ -67,7 +73,7 @@ public class ArloService : IArloService
         {
             new ArloResponse { Validation = "That ‘I’ve failed’ feeling hits hard.", Action = "Write down one thing you did do today. Anything counts.", NextStep = "Your brain may be skipping the evidence." },
             new ArloResponse { Validation = "Feeling like you’ve messed up doesn’t mean you are a mess.", Action = "Pause and say: this is a hard moment, not my whole identity.", NextStep = "Then choose one kind next move." },
-            new ArloResponse { Validation = "That shame spiral can be loud.", Action = "Find one tiny repair step. Message someone, tidy one thing, drink water, or reset.", NextStep = "Repair beats punishment." }
+            new ArloResponse { Validation = "That shame spiral can be loud.", Action = "Find one small repair step. Message someone, tidy one thing, drink water, or reset.", NextStep = "Repair beats punishment." }
         },
 
         ["overstimulated"] = new()
@@ -81,18 +87,20 @@ public class ArloService : IArloService
         {
             new ArloResponse { Validation = "Nice. We don’t need to force anything big.", Action = "Pick one small thing that would make today slightly easier.", NextStep = "Small steady steps count." },
             new ArloResponse { Validation = "Okay is a good place to start from.", Action = "Choose one thing you can move forward gently.", NextStep = "No need to sprint." },
-            new ArloResponse { Validation = "Good. Let’s keep it light and useful.", Action = "Do one small thing before your brain changes the channel.", NextStep = "Tiny momentum is still momentum." }
+            new ArloResponse { Validation = "Good. Let’s keep it light and useful.", Action = "Do one small thing before your brain changes the channel.", NextStep = "small momentum is still momentum." }
         }
     };
 
     public ArloService(
-        ICheckInService checkInService,
-        ITaskService taskService,
-        IArloAiClient arloAiClient)
+       ICheckInService checkInService,
+       ITaskService taskService,
+       IArloAiClient arloAiClient,
+       IWinService winService)
     {
         _checkInService = checkInService;
         _taskService = taskService;
         _arloAiClient = arloAiClient;
+        _winService = winService;
     }
 
     public Task<List<ChatMessage>> GetMessagesAsync()
@@ -126,10 +134,20 @@ public class ArloService : IArloService
 
         var emotionalContext = BuildEmotionalContext(latestCheckIn);
 
+        var state = DetectState(message);
+        TrackRecentMode(state);
+
+        await TrySaveAutoCheckInAsync(state, userMessage);
+        await TrySaveAutoWinAsync(userMessage);
+
         var aiRequest = new ArloAiRequest
         {
             UserMessage = userMessage,
             EmotionalContext = emotionalContext,
+            RecentChat = _messages
+                .TakeLast(3)
+                .Select(m => $"{(m.IsFromUser ? "U" : "A")}: {m.Text}")
+                .ToList(),
             OpenTasks = unfinishedTasks
                 .Take(3)
                 .Select(t => t.Title)
@@ -137,18 +155,12 @@ public class ArloService : IArloService
             RecentModes = _recentModes.ToList()
         };
 
-        // AI responses.
         var aiReply = await _arloAiClient.GetReplyAsync(aiRequest);
 
         if (!string.IsNullOrWhiteSpace(aiReply))
         {
             return aiReply;
         }
-        // If AI is slow, offline, or unavailable, continue with local Arlo support.
-        // The user should never see technical failure wording.
-
-        var state = DetectState(message);
-        TrackRecentMode(state);
 
         if (_responses.TryGetValue(state, out var stateResponses))
         {
@@ -175,6 +187,68 @@ public class ArloService : IArloService
         }
 
         return GetDefaultReply(emotionalContext, unfinishedTasks);
+    }
+
+    private async Task TrySaveAutoWinAsync(string userMessage)
+    {
+        if (string.IsNullOrWhiteSpace(userMessage))
+            return;
+
+        var message = userMessage.Trim();
+
+        if (!LooksLikeAWin(message))
+            return;
+
+        var now = DateTime.UtcNow;
+
+        if (_lastAutoWinUtc.HasValue &&
+            now - _lastAutoWinUtc.Value < TimeSpan.FromMinutes(10))
+        {
+            return;
+        }
+
+        var win = new WinEntry
+        {
+            Text = CleanWinText(message),
+            TimestampUtc = now
+        };
+
+        await _winService.AddWinAsync(win);
+        _lastAutoWinUtc = now;
+
+        Debug.WriteLine($"WIN SAVED: {win.Text}");
+
+    }
+
+    private static bool LooksLikeAWin(string message)
+    {
+        var text = message
+            .ToLowerInvariant()
+            .Replace("'", "")
+            .Replace("’", "");
+
+        return text.Contains("i did")
+            || text.Contains("i managed")
+            || text.Contains("i finally")
+            || text.Contains("i completed")
+            || text.Contains("i finished")
+            || text.Contains("i sent")
+            || text.Contains("i cleaned")
+            || text.Contains("i made it")
+            || text.Contains("i showed up")
+            || text.Contains("i went");
+    }
+
+    private static string CleanWinText(string message)
+    {
+        var cleaned = message.Trim();
+
+        if (cleaned.Length > 160)
+        {
+            cleaned = cleaned[..160].TrimEnd() + "...";
+        }
+
+        return cleaned;
     }
     private void TrackRecentMode(string mode)
     {
@@ -293,7 +367,7 @@ public class ArloService : IArloService
         if (state is "overwhelmed" or "cant_start" or "stuck" or "too_much" or "avoiding")
         {
             var nextTask = tasks.First().Title;
-            return $"Tiny option later: \"{nextTask}\". No pressure.";
+            return $"Small option later: \"{nextTask}\". No pressure.";
         }
 
         return string.Empty;
@@ -306,7 +380,7 @@ public class ArloService : IArloService
         var response = "I’m here with you. We don’t need to fix everything right now. Tell me what feels like the hardest part.";
 
         var taskNudge = unfinishedTasks.Count > 0
-            ? $"Tiny option later: \"{unfinishedTasks.First().Title}\". No pressure."
+            ? $"Small option later: \"{unfinishedTasks.First().Title}\". No pressure."
             : string.Empty;
 
         return CombineParts(emotionalContext, response, taskNudge);
@@ -333,5 +407,61 @@ public class ArloService : IArloService
         }
 
         return combined;
+    }
+    private async Task TrySaveAutoCheckInAsync(string state, string userMessage)
+    {
+        if (string.IsNullOrWhiteSpace(state) || state == "default")
+            return;
+
+        var now = DateTime.UtcNow;
+
+        // Only auto-save one check-in every 4 hours for now
+        if (_lastAutoCheckInUtc.HasValue &&
+            now - _lastAutoCheckInUtc.Value < TimeSpan.FromHours(4))
+        {
+            return;
+        }
+
+        var checkIn = new CheckInEntry
+        {
+            Mood = state,
+            Note = userMessage,
+            TimestampUtc = now,
+            EnergyLevel = EstimateEnergyLevel(state),
+            FocusLevel = EstimateFocusLevel(state)
+        };
+
+        await _checkInService.SaveCheckInAsync(checkIn);
+        Debug.WriteLine($"CHECK-IN SAVED: {checkIn.Mood}");
+        _lastAutoCheckInUtc = now;
+    }
+    private static int EstimateEnergyLevel(string state)
+    {
+        return state switch
+        {
+            "low_energy" => 1,
+            "overwhelmed" => 2,
+            "too_much" => 2,
+            "stuck" => 2,
+            "failed" => 2,
+            "anxious" => 3,
+            "okay" => 4,
+            _ => 3
+        };
+    }
+
+    private static int EstimateFocusLevel(string state)
+    {
+        return state switch
+        {
+            "overwhelmed" => 1,
+            "too_much" => 1,
+            "stuck" => 2,
+            "cant_start" => 2,
+            "low_energy" => 2,
+            "anxious" => 2,
+            "okay" => 4,
+            _ => 3
+        };
     }
 }

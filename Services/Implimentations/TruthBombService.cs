@@ -8,7 +8,7 @@ public class TruthBombService : ITruthBombService
     private readonly List<TruthBomb> _truthBombs = new()
     {
         new TruthBomb { Text = "Progress over perfection." },
-        new TruthBomb { Text = "You don’t need motivation. You need a tiny first step." },
+        new TruthBomb { Text = "You don’t need motivation. You need a small first step." },
         new TruthBomb { Text = "Done is better than perfect." },
         new TruthBomb { Text = "Low energy doesn’t mean no value." },
         new TruthBomb { Text = "You’re not broken. Your brain just works differently." }

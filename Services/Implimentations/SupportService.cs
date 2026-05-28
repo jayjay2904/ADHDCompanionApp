@@ -12,7 +12,7 @@ public class SupportService : ISupportService
             Title = "I'm overwhelmed",
             ValidationText = "That’s okay. You do not need to solve everything right now.",
             ImmediateActionText = "Put both feet on the floor and take one slow breath.",
-            NextStepText = "Pick one tiny action: drink some water, sit up properly, or put one thing away.",
+            NextStepText = "Pick one small action: drink some water, sit up properly, or put one thing away.",
             AlternateImmediateActionText = "Look around and name 3 things you can see.",
             AlternateNextStepText = "Choose one thing you can ignore for the next 10 minutes."
         },

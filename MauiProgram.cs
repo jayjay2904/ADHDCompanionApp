@@ -46,6 +46,7 @@ namespace ADHDCompanionApp
             builder.Services.AddSingleton<ISupportService, SupportService>();
             builder.Services.AddSingleton<IArloService, ArloService>();
             builder.Services.AddSingleton<IReminderEngine, ReminderEngine>();
+            
 
             builder.Services.AddSingleton(new HttpClient
             {
@@ -63,12 +64,15 @@ namespace ADHDCompanionApp
             builder.Services.AddTransient<ProgressViewModel>();
             builder.Services.AddTransient<ArloViewModel>();
             builder.Services.AddTransient<PreferencesViewModel>();
+            builder.Services.AddTransient<ProgressSummaryViewModel>();
+            
 
             // Register Pages
             builder.Services.AddSingleton<AppShell>();
-            //builder.Services.AddTransient<WelcomePage>();
             builder.Services.AddTransient<QuickSetupPage>();
             builder.Services.AddTransient<PreferencesPage>();
+            builder.Services.AddTransient<ProgressSummaryViewModel>();
+            builder.Services.AddTransient<ProgressSummaryPopup>();
 
 
 #if ANDROID
