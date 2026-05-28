@@ -14,9 +14,9 @@ public class ProgressSummaryViewModel
     public ObservableCollection<CheckInEntry> RecentCheckIns { get; } = new();
     public ObservableCollection<TaskItem> OpenTasks { get; } = new();
 
-    public string WinsSummary { get; private set; } = "No wins captured yet.";
-    public string CheckInSummary { get; private set; } = "No check-ins captured yet.";
-    public string TasksSummary { get; private set; } = "No open small steps.";
+    public string WinsSummary { get; private set; } = "";
+    public string CheckInSummary { get; private set; } = "";
+    public string TasksSummary { get; private set; } = "";
 
     public ProgressSummaryViewModel(
         IWinService winService,
@@ -30,32 +30,27 @@ public class ProgressSummaryViewModel
 
     public async Task LoadAsync()
 {
-    RecentWins.Clear();
-    RecentCheckIns.Clear();
-    OpenTasks.Clear();
+        var cutoffUtc = DateTime.UtcNow.AddHours(-48);
+        RecentWins.Clear();
+        RecentCheckIns.Clear();
+        OpenTasks.Clear();
 
-    var recentWins = (await _winService.GetRecentWinsAsync())
+        var recentWins = (await _winService.GetRecentWinsAsync())
+        .Where(w => w.TimestampUtc >= cutoffUtc)
         .Take(5)
         .ToList();
 
-        List<CheckInEntry> recentCheckIns = new();
-
-        try
-        {
-            recentCheckIns = (await _checkInService.GetAllCheckInsAsync())
-                .OrderByDescending(c => c.TimestampUtc)
-                .Take(5)
-                .ToList();
-        }
-        catch
-        {
-            CheckInSummary = "Check-ins couldn’t be loaded yet.";
-        }
-        var openTasks = (await _taskService.GetAllTasksAsync())
-        .Where(t => !t.IsCompleted)
-        .OrderByDescending(t => t.CreatedUtc)
+        var recentCheckIns = (await _checkInService.GetAllCheckInsAsync())
+        .Where(w => w.TimestampUtc >= cutoffUtc)
+        .OrderByDescending(c => c.TimestampUtc)
         .Take(5)
         .ToList();
+        
+        //var openTasks = (await _taskService.GetAllTasksAsync())
+        //.Where(t => !t.IsCompleted)
+        //.OrderByDescending(t => t.CreatedUtc)
+        //.Take(5)
+        //.ToList();
 
     foreach (var win in recentWins)
         RecentWins.Add(win);
@@ -63,19 +58,19 @@ public class ProgressSummaryViewModel
     foreach (var checkIn in recentCheckIns)
         RecentCheckIns.Add(checkIn);
 
-    foreach (var task in openTasks)
-        OpenTasks.Add(task);
+    //foreach (var task in openTasks)
+    //    OpenTasks.Add(task);
 
-    WinsSummary = recentWins.Count == 0
+        WinsSummary = recentWins.Count == 0
         ? "No wins captured yet."
-        : $"{recentWins.Count} recent win{(recentWins.Count == 1 ? "" : "s")} captured.";
+        : string.Empty;
 
-    CheckInSummary = recentCheckIns.Count == 0
-        ? "No check-ins captured yet."
-        : $"{recentCheckIns.Count} recent check-in{(recentCheckIns.Count == 1 ? "" : "s")} captured.";
+        CheckInSummary = recentCheckIns.Count == 0
+            ? "No check-ins captured yet."
+            : string.Empty;
 
-    TasksSummary = openTasks.Count == 0
-        ? "No open small steps."
-        : $"{openTasks.Count} open small step{(openTasks.Count == 1 ? "" : "s")}.";
-}
+        //TasksSummary = openTasks.Count == 0
+        //    ? "No open reminders yet."
+        //    : string.Empty;
+    }
 }

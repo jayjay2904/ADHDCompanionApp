@@ -14,7 +14,7 @@ public partial class ProgressSummaryPopup : Popup
         _viewModel = viewModel;
         BindingContext = _viewModel;
 
-        //_= LoadAsync();
+        _= LoadAsync();
     }
 
     public async Task LoadAsync()

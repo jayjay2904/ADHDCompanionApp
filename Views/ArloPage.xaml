@@ -13,20 +13,21 @@
 
     <ContentPage.ToolbarItems>
         <ToolbarItem
+            Text="Progress"
+            Order="Primary"
+            Priority="0"
+            Command="{Binding ShowProgressCommand}" />
+
+        <ToolbarItem
             IconImageSource="gear.svg"
             Order="Primary"
             Priority="1"
             Clicked="OnPreferencesClicked" />
-        <ToolbarItem
-            Text="Progress"
-            Order="Primary"
-            Priority="0"
-            Command="{Binding ShowProgressCommand}" />  
     </ContentPage.ToolbarItems>
 
     <Grid>
 
-        <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="8">
+        <Grid RowDefinitions="Auto,*,Auto,Auto" Padding="20" RowSpacing="8">
 
             <!-- Header + First-Time Quick Prompts -->
             <VerticalStackLayout
@@ -37,7 +38,7 @@
                 <VerticalStackLayout
                     Spacing="-8"
                     HorizontalOptions="Center"
-                    VerticalOptions="Center">   
+                    VerticalOptions="Center">
 
                     <Image
                         Source="arlo_main.png"
@@ -69,14 +70,14 @@
                     ItemsSource="{Binding QuickPrompts}"
                     SelectionMode="None"
                     HeightRequest="200"
-                    Margin="0,8,0,20">  
+                    Margin="0,8,0,20">
 
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout
                             Orientation="Vertical"
                             Span="2"
                             HorizontalItemSpacing="10"
-                            VerticalItemSpacing="10" /> 
+                            VerticalItemSpacing="10" />
                     </CollectionView.ItemsLayout>
 
                     <CollectionView.ItemTemplate>
@@ -87,33 +88,33 @@
                                 HasShadow="False"
                                 HeightRequest="42"
                                 Margin="0,2"
-                                BackgroundColor="{Binding Text, Converter={StaticResource ArloPromptColourConverter}}"> 
+                                BackgroundColor="{Binding Text, Converter={StaticResource ArloPromptColourConverter}}">
 
                                 <Frame.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Tapped="OnQuickPromptTapped"
                                         Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
-                                        CommandParameter="{Binding Text}" />    
+                                        CommandParameter="{Binding Text}" />
                                 </Frame.GestureRecognizers>
 
                                 <HorizontalStackLayout
                                     Spacing="4"
                                     HorizontalOptions="Center"
-                                    VerticalOptions="Center">   
+                                    VerticalOptions="Center">
 
                                     <Image
                                         Source="{Binding Icon}"
                                         HeightRequest="22"
                                         WidthRequest="22"
                                         VerticalOptions="Center"
-                                        Margin="0,0,2,0" /> 
+                                        Margin="0,0,2,0" />
 
                                     <Label
                                         Text="{Binding Text}"
                                         FontSize="14"
                                         TextColor="#2E2E2E"
                                         LineBreakMode="TailTruncation"
-                                        VerticalTextAlignment="Center" />   
+                                        VerticalTextAlignment="Center" />
 
                                 </HorizontalStackLayout>
 
@@ -144,6 +145,7 @@
                             FontAttributes="Bold"
                             VerticalOptions="Center"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
                     </Grid>
 
                     <ScrollView
@@ -173,13 +175,14 @@
                                                 <Frame
                                                     Grid.Column="1"
                                                     Style="{StaticResource ArloBubbleStyle}"
-                                                    HorizontalOptions="Fill">  
+                                                    HorizontalOptions="Fill">
 
                                                     <Label
                                                         Text="{Binding Text}"
                                                         TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
                                                         FontSize="16"
-                                                        LineBreakMode="WordWrap" />
+                                                        LineBreakMode="WordWrap"
+                                                        LineHeight="1.2" />
 
                                                 </Frame>
 
@@ -200,7 +203,8 @@
                                                         Text="{Binding Text}"
                                                         FontSize="16"
                                                         TextColor="#2E2E2E"
-                                                        LineBreakMode="WordWrap" />
+                                                        LineBreakMode="WordWrap"
+                                                        LineHeight="1.2" />
 
                                                 </Frame>
 
@@ -219,19 +223,64 @@
 
             </Frame>
 
-            <!-- Chat-style Input -->
+            <!-- Reminder Suggestion Card -->
             <Frame
                 Grid.Row="2"
+                IsVisible="{Binding IsReminderSuggestionVisible}"
+                BackgroundColor="{StaticResource Primary}"
+                CornerRadius="18"
+                Padding="12"
+                Margin="0,0,0,8">
+
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+
+                    <Label
+                        Grid.Column="0"
+                        Text="{Binding PendingReminderText, StringFormat='Would you like a reminder for: {0}?'}"
+                        TextColor="#2E2E2E"
+                        FontSize="14"
+                        VerticalOptions="Center" />
+
+                    <Button
+                        Grid.Column="1"
+                        Text="✓"
+                        WidthRequest="54"
+                        HeightRequest="54"
+                        CornerRadius="27"
+                        FontSize="30"
+                        Padding="0"
+                        BackgroundColor="#F5F1E8"
+                        TextColor="#2E2E2E"
+                        Command="{Binding AcceptReminderSuggestionCommand}" />
+
+                    <Button
+                        Grid.Column="2"
+                        Text="✕"
+                        WidthRequest="54"
+                        HeightRequest="54"
+                        CornerRadius="27"
+                        FontSize="28"
+                        Padding="0"
+                        BackgroundColor="#F5F1E8"
+                        TextColor="#2E2E2E"
+                        Command="{Binding DismissReminderSuggestionCommand}" />
+
+                </Grid>
+
+            </Frame>
+
+            <!-- Chat-style Input -->
+            <Frame
+                Grid.Row="3"
                 BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
                 BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
                 CornerRadius="28"
                 Padding="8"
                 HasShadow="False"
-                VerticalOptions="End">  
+                VerticalOptions="End">
 
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
 
-                    <!-- Prompt picker button -->
                     <Button
                         Grid.Column="0"
                         Text="+"
@@ -245,9 +294,8 @@
                         FontAttributes="Bold"
                         Command="{Binding ShowPromptsCommand}"
                         Pressed="OnPromptPlusPressed"
-                        Released="OnPromptPlusReleased" />  
+                        Released="OnPromptPlusReleased" />
 
-                    <!-- Text input -->
                     <Entry
                         x:Name="UserInputEntry"
                         Grid.Column="1"
@@ -258,8 +306,7 @@
                         BackgroundColor="Transparent"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
                         PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
-                    
-                    <!-- Speech to text button  -->
+
                     <ImageButton
                         Grid.Column="2"
                         Source="mic.png"
@@ -269,9 +316,8 @@
                         Command="{Binding ListenCommand}"
                         HorizontalOptions="Center"
                         VerticalOptions="Center"
-                        Padding="0" />     
+                        Padding="0" />
 
-                    <!-- Send button -->
                     <Button
                         Grid.Column="3"
                         Text="➜"
@@ -285,9 +331,65 @@
                         FontAttributes="Bold"
                         Command="{Binding SendMessageCommand}"
                         Pressed="OnSendButtonPressed"
-                        Released="OnSendButtonReleased" />  
+                        Released="OnSendButtonReleased" />
 
                 </Grid>
+
+            </Frame>
+
+        </Grid>
+
+        <!-- Reminder Setup Overlay -->
+        <Grid
+            BackgroundColor="#80000000"
+            IsVisible="{Binding IsReminderSetupVisible}"
+            InputTransparent="{Binding IsReminderSetupVisible, Converter={StaticResource InverseBoolConverter}}">
+
+            <Frame
+                VerticalOptions="End"
+                Margin="20"
+                Padding="16"
+                CornerRadius="24"
+                Style="{StaticResource CardFrameStyle}">
+
+                <VerticalStackLayout Spacing="14">
+
+                    <Label
+                        Text="Set reminder"
+                        FontSize="20"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                    <Label
+                        Text="{Binding PendingReminderText}"
+                        FontSize="14"
+                        Opacity="0.8"
+                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+
+                    <DatePicker
+                        Date="{Binding ReminderDate}" />
+
+                    <TimePicker
+                        Time="{Binding ReminderTime}" />
+
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+
+                        <Button
+                            Grid.Column="0"
+                            Text="Cancel"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding CancelReminderSetupCommand}" />
+
+                        <Button
+                            Grid.Column="1"
+                            Text="Set"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="#2E2E2E"
+                            Command="{Binding SaveReminderCommand}" />
+
+                    </Grid>
+
+                </VerticalStackLayout>
 
             </Frame>
 

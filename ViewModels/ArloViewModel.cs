@@ -1,7 +1,9 @@
+using ADHDCompanionApp.Models;
 using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.Services.Interfaces;
 using ADHDCompanionApp.Views;
 using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +11,7 @@ using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Dispatching;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using CommunityToolkit.Maui.Views;
+
 
 namespace ADHDCompanionApp.ViewModels;
 
@@ -19,6 +21,7 @@ public partial class ArloViewModel : BaseViewModel
 
     private readonly ISpeechToTextService _speechToTextService;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IReminderEngine _reminderEngine;
 
     public event Action? ArloFinishedResponding;
 
@@ -34,7 +37,23 @@ public partial class ArloViewModel : BaseViewModel
     [ObservableProperty]
     private string greetingText = "Hi.";
 
+    [ObservableProperty]
+    private bool isReminderSuggestionVisible;
+
+    [ObservableProperty]
+    private string pendingReminderText = string.Empty;
+
+    [ObservableProperty]
+    private bool isReminderSetupVisible;
+
+    [ObservableProperty]
+    private DateTime reminderDate = DateTime.Today;
+
+    [ObservableProperty]
+    private TimeSpan reminderTime = DateTime.Now.AddHours(1).TimeOfDay;
+
     public ICommand ShowProgressCommand { get; }
+
     private bool _isOpeningProgress;
 
     public ObservableCollection<ChatMessage> Messages { get; } = new();
@@ -55,14 +74,15 @@ public partial class ArloViewModel : BaseViewModel
         IArloService arloService,
         IUserProfileService profileService,
         ISpeechToTextService speechToTextService,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        IReminderEngine reminderEngine)
     {
         _arloService = arloService;
         _profileService = profileService;
         _speechToTextService = speechToTextService;
         _serviceProvider = serviceProvider;
-        //ShowProgressCommand = new Command(async () => await ShowProgressAsync());
         ShowProgressCommand = new Command(ShowProgress);
+        _reminderEngine = reminderEngine;
 
         Title = "Arlo";
 
@@ -257,6 +277,75 @@ public partial class ArloViewModel : BaseViewModel
         await LoadMessagesAsync();
     }
 
+    [RelayCommand]
+    private void DismissReminderSuggestion()
+    {
+        IsReminderSuggestionVisible = false;
+        PendingReminderText = string.Empty;
+    }
+
+   
+    [RelayCommand]
+    private void AcceptReminderSuggestion()
+    {
+        IsReminderSuggestionVisible = false;
+
+        ReminderDate = DateTime.Today;
+        ReminderTime = DateTime.Now.AddHours(1).TimeOfDay;
+
+        IsReminderSetupVisible = true;
+    }
+
+    [RelayCommand]
+    private async Task SaveReminder()
+    {
+        var reminderDateTime = ReminderDate.Date.Add(ReminderTime);
+
+        if (reminderDateTime <= DateTime.Now)
+        {
+            await Shell.Current.CurrentPage.DisplayAlert(
+                "Reminder",
+                "Pick a time in the future.",
+                "OK");
+
+            return;
+        }
+
+        var canSchedule = await _reminderEngine.CanScheduleExactRemindersAsync();
+
+        if (!canSchedule)
+        {
+            await Shell.Current.CurrentPage.DisplayAlert(
+                "Reminder permission",
+                "Your phone needs permission to schedule exact reminders. I’ll open the setting now.",
+                "OK");
+
+            await _reminderEngine.OpenExactReminderSettingsAsync();
+            return;
+        }
+
+        var notificationId = Math.Abs(Guid.NewGuid().GetHashCode());
+
+        var request = new ReminderRequest
+        {
+            ReminderKey = $"arlo_{notificationId}",
+            NotificationId = notificationId,
+            Type = ReminderType.Custom,
+            Title = "Arlo reminder",
+            Message = PendingReminderText,
+            TriggerTime = reminderDateTime
+        };
+
+        await _reminderEngine.ScheduleReminderAsync(request);
+
+        IsReminderSetupVisible = false;
+        PendingReminderText = string.Empty;
+
+        await Shell.Current.CurrentPage.DisplayAlert(
+            "Reminder set",
+            "I’ll remind you.",
+            "OK");
+    }
     private async Task ProcessMessageAsync(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -280,6 +369,24 @@ public partial class ArloViewModel : BaseViewModel
         await Task.Delay(400);
 
         var replyText = await _arloService.GetReplyAsync(input);
+
+        if (input.Contains("need to", StringComparison.OrdinalIgnoreCase) ||
+            input.Contains("have to", StringComparison.OrdinalIgnoreCase) ||
+            input.Contains("should", StringComparison.OrdinalIgnoreCase) ||
+            input.Contains("remember to", StringComparison.OrdinalIgnoreCase) ||
+            input.Contains("appointment", StringComparison.OrdinalIgnoreCase) ||
+            input.Contains("meeting", StringComparison.OrdinalIgnoreCase) ||
+            input.Contains("don't let me forget", StringComparison.OrdinalIgnoreCase) ||
+            input.Contains("dont let me forget", StringComparison.OrdinalIgnoreCase) ||
+            input.Contains("remind me", StringComparison.OrdinalIgnoreCase))
+        {
+            PendingReminderText = CleanReminderText(input);
+            IsReminderSuggestionVisible = true;
+        }
+        else
+        {
+            IsReminderSuggestionVisible = false;
+        }
 
         System.Diagnostics.Debug.WriteLine($"[Arlo] Reply text: '{replyText}'");
 
@@ -336,10 +443,25 @@ public partial class ArloViewModel : BaseViewModel
 
         ArloFinishedResponding?.Invoke();
     }
-    private void ShowProgress()
+    private async void ShowProgress()
     {
         var popup = _serviceProvider.GetRequiredService<ProgressSummaryPopup>();
 
+        await popup.LoadAsync();
+
         Shell.Current.CurrentPage.ShowPopup(popup);
+    }
+    private static string CleanReminderText(string input)
+    {
+        var cleaned = input
+            .Replace("I need to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I have to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I should", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("remember to", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        return string.IsNullOrWhiteSpace(cleaned)
+            ? input.Trim()
+            : cleaned;
     }
 }

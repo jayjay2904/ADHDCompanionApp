@@ -17,6 +17,7 @@ public class ArloService : IArloService
 
     private DateTime? _lastAutoCheckInUtc;
     private DateTime? _lastAutoWinUtc;
+    private string? _pendingReminderText;
 
     private readonly Dictionary<string, List<ArloResponse>> _responses = new()
     {
@@ -140,6 +141,14 @@ public class ArloService : IArloService
         await TrySaveAutoCheckInAsync(state, userMessage);
         await TrySaveAutoWinAsync(userMessage);
 
+        var reminderSuggestion = string.Empty;
+
+        if (LooksLikeReminderIntent(userMessage))
+        {
+            _pendingReminderText = CleanReminderText(userMessage);
+            
+        }
+
         var aiRequest = new ArloAiRequest
         {
             UserMessage = userMessage,
@@ -159,7 +168,7 @@ public class ArloService : IArloService
 
         if (!string.IsNullOrWhiteSpace(aiReply))
         {
-            return aiReply;
+            return aiReply + reminderSuggestion;
         }
 
         if (_responses.TryGetValue(state, out var stateResponses))
@@ -183,10 +192,10 @@ public class ArloService : IArloService
 
             var gentleTaskNudge = BuildGentleTaskNudge(unfinishedTasks, state);
 
-            return CombineParts(emotionalContext, structuredReply, gentleTaskNudge);
+            return CombineParts(emotionalContext, structuredReply, gentleTaskNudge) + reminderSuggestion;
         }
 
-        return GetDefaultReply(emotionalContext, unfinishedTasks);
+        return GetDefaultReply(emotionalContext, unfinishedTasks) + reminderSuggestion;
     }
 
     private async Task TrySaveAutoWinAsync(string userMessage)
@@ -463,5 +472,37 @@ public class ArloService : IArloService
             "okay" => 4,
             _ => 3
         };
+    }
+    private static bool LooksLikeReminderIntent(string message)
+    {
+        var text = message
+            .ToLowerInvariant()
+            .Replace("'", "")
+            .Replace("’", "");
+
+        return text.Contains("i need to")
+            || text.Contains("i have to")
+            || text.Contains("i should")
+            || text.Contains("remind me")
+            || text.Contains("dont let me forget")
+            || text.Contains("remember to");
+    }
+
+    private static string CleanReminderText(string message)
+    {
+        var cleaned = message.Trim();
+
+        cleaned = cleaned
+            .Replace("I need to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I have to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I should", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("remind me to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("remember to", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        if (string.IsNullOrWhiteSpace(cleaned))
+            return message.Trim();
+
+        return char.ToUpper(cleaned[0]) + cleaned[1..];
     }
 }
