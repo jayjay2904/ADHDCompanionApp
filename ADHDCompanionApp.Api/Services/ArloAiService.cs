@@ -29,6 +29,7 @@ public class ArloAiService
     public async Task<string?> GetReplyAsync(string prompt)
     {
         var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        Debug.WriteLine($"OPENAI_API_KEY found: {!string.IsNullOrWhiteSpace(apiKey)}");
 
         if (string.IsNullOrWhiteSpace(apiKey))
             return null;
