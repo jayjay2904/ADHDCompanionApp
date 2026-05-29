@@ -71,7 +71,6 @@ namespace ADHDCompanionApp
             builder.Services.AddSingleton<AppShell>();
             builder.Services.AddTransient<QuickSetupPage>();
             builder.Services.AddTransient<PreferencesPage>();
-            builder.Services.AddTransient<ProgressSummaryViewModel>();
             builder.Services.AddTransient<ProgressSummaryPopup>();
 
 

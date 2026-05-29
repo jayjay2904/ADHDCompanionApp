@@ -1,6 +1,4 @@
 <Solution>
   <Project Path="ADHDCompanionApp.Api/ADHDCompanionApp.Api.csproj" Id="269cb3d2-68e7-4fd3-b720-631f6c2182aa" />
-  <Project Path="ADHDCompanionApp/ADHDCompanionApp.csproj">
-    <Deploy Solution="Debug|*" />
-  </Project>
+  <Project Path="ADHDCompanionApp.csproj" />
 </Solution>

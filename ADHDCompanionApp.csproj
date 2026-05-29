@@ -66,6 +66,21 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <AndroidResource Remove="ADHDCompanionApp.Api\**" />
+	  <AndroidResource Remove="ADHDCompanionApp_MESSY_BACKUP\**" />
+	  <Compile Remove="ADHDCompanionApp.Api\**" />
+	  <Compile Remove="ADHDCompanionApp_MESSY_BACKUP\**" />
+	  <EmbeddedResource Remove="ADHDCompanionApp.Api\**" />
+	  <EmbeddedResource Remove="ADHDCompanionApp_MESSY_BACKUP\**" />
+	  <MauiCss Remove="ADHDCompanionApp.Api\**" />
+	  <MauiCss Remove="ADHDCompanionApp_MESSY_BACKUP\**" />
+	  <MauiXaml Remove="ADHDCompanionApp.Api\**" />
+	  <MauiXaml Remove="ADHDCompanionApp_MESSY_BACKUP\**" />
+	  <None Remove="ADHDCompanionApp.Api\**" />
+	  <None Remove="ADHDCompanionApp_MESSY_BACKUP\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Maui" Version="14.1.0" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.41" />
