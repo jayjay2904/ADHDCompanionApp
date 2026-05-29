@@ -11,69 +11,108 @@
         CornerRadius="24"
         Style="{StaticResource CardFrameStyle}">
 
-        <ScrollView HeightRequest="520">
-            <VerticalStackLayout Spacing="2">
+        <VerticalStackLayout Spacing="12">
 
-                <Grid ColumnDefinitions="*,Auto">
+            <Grid ColumnDefinitions="*,Auto">
 
-                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
 
-                        <Label
-                            Text="Your progress"
-                            FontSize="22"
-                            FontAttributes="Bold" />    
+                    <Label
+                        Text="Your progress"
+                        FontSize="22"
+                        FontAttributes="Bold" />
 
-                        <Label
-                            Text="A gentle look at what Arlo has noticed."
-                            FontSize="13"   
-                            Opacity="0.8" />    
+                    <Label
+                        Text="A gentle look at what Arlo has noticed."
+                        FontSize="13"
+                        Opacity="0.8" />
 
-                    </VerticalStackLayout>
+                </VerticalStackLayout>
 
-                    <Button
-                        Grid.Column="1"
-                        Text="✕"
-                        FontSize="18"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        Padding="0"
-                        CornerRadius="20"
-                        BackgroundColor="#B3CF99"
-                        Clicked="OnCloseClicked" /> 
+                <Button
+                    Grid.Column="1"
+                    Text="✕"
+                    FontSize="18"
+                    WidthRequest="40"
+                    HeightRequest="40"
+                    Padding="0"
+                    CornerRadius="20"
+                    BackgroundColor="{StaticResource Primary}"
+                    TextColor="#2E2E2E"
+                    Clicked="OnCloseClicked" />
 
-                </Grid>
+            </Grid>
 
-                <Label Text="Recent wins" FontSize="17" FontAttributes="Bold" />
-                <Label Text="{Binding WinsSummary}" />
-                <CollectionView ItemsSource="{Binding RecentWins}" HeightRequest="110">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Label Text="{Binding Text}" FontSize="14" Margin="0,4" />
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+            <Frame
+                BorderColor="{StaticResource Primary}"
+                BackgroundColor="Transparent"
+                CornerRadius="18"
+                Padding="12"
+                HasShadow="False"
+                HeightRequest="190">
 
-                <Label Text="Recent check-ins" FontSize="17" FontAttributes="Bold" />
-                <Label Text="{Binding CheckInSummary}" />
-                <CollectionView ItemsSource="{Binding RecentCheckIns}" HeightRequest="110">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Label Text="{Binding Mood}" FontSize="14" Margin="0,4" />
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                <VerticalStackLayout Spacing="4">
 
-                <!--<Label Text="Open small steps" FontSize="17" FontAttributes="Bold" />
-                <Label Text="{Binding TasksSummary}" />
-                <CollectionView ItemsSource="{Binding OpenTasks}" HeightRequest="110">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Label Text="{Binding Title}" FontSize="14" Margin="0,4" />
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>-->
+                    <Label
+                        Text="Recent wins"
+                        FontSize="17"
+                        FontAttributes="Bold" />
 
-            </VerticalStackLayout>
-        </ScrollView>
+                    <CollectionView
+                        ItemsSource="{Binding RecentWins}"
+                        HeightRequest="140">
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Label
+                                    Text="{Binding Text}"
+                                    FontSize="14"
+                                    Margin="0,2" />
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+
+                    </CollectionView>
+
+                </VerticalStackLayout>
+
+            </Frame>
+
+            <Frame
+                BorderColor="{StaticResource Primary}"
+                BackgroundColor="Transparent"
+                CornerRadius="18"
+                Padding="12"
+                HasShadow="False"
+                HeightRequest="190">
+
+                <VerticalStackLayout Spacing="4">
+
+                    <Label
+                        Text="Recent check-ins"
+                        FontSize="17"
+                        FontAttributes="Bold" />
+
+                    <CollectionView
+                        ItemsSource="{Binding RecentCheckIns}"
+                        HeightRequest="140">
+
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Label
+                                    Text="{Binding Mood}"
+                                    FontSize="14"
+                                    Margin="0,2" />
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+
+                    </CollectionView>
+
+                </VerticalStackLayout>
+
+            </Frame>
+
+        </VerticalStackLayout>
+
     </Frame>
+
 </toolkit:Popup>

@@ -346,6 +346,12 @@ public partial class ArloViewModel : BaseViewModel
             "I’ll remind you.",
             "OK");
     }
+    [RelayCommand]
+    private void CancelReminderSetup()
+    {
+        IsReminderSetupVisible = false;
+        PendingReminderText = string.Empty;
+    }
     private async Task ProcessMessageAsync(string input)
     {
         if (string.IsNullOrWhiteSpace(input))

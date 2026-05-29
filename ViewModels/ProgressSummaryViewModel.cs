@@ -14,10 +14,6 @@ public class ProgressSummaryViewModel
     public ObservableCollection<CheckInEntry> RecentCheckIns { get; } = new();
     public ObservableCollection<TaskItem> OpenTasks { get; } = new();
 
-    public string WinsSummary { get; private set; } = "";
-    public string CheckInSummary { get; private set; } = "";
-    public string TasksSummary { get; private set; } = "";
-
     public ProgressSummaryViewModel(
         IWinService winService,
         ICheckInService checkInService,
@@ -61,16 +57,6 @@ public class ProgressSummaryViewModel
     //foreach (var task in openTasks)
     //    OpenTasks.Add(task);
 
-        WinsSummary = recentWins.Count == 0
-        ? "No wins captured yet."
-        : string.Empty;
-
-        CheckInSummary = recentCheckIns.Count == 0
-            ? "No check-ins captured yet."
-            : string.Empty;
-
-        //TasksSummary = openTasks.Count == 0
-        //    ? "No open reminders yet."
-        //    : string.Empty;
+       
     }
 }

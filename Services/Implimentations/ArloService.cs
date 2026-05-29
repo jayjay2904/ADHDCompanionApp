@@ -19,6 +19,64 @@ public class ArloService : IArloService
     private DateTime? _lastAutoWinUtc;
     private string? _pendingReminderText;
 
+    private static readonly string[] WinPhrases =
+    {
+        "i did",
+        "i have done",
+        "ive done",
+        "i managed",
+        "i finally",
+        "i completed",
+        "i finished",
+        "i sent",
+        "i have sent",
+        "ive sent",
+        "i sorted",
+        "i fixed",
+        "i cleaned",
+        "i booked",
+        "i made it",
+        "i showed up",
+        "i went",
+        "i started",
+        "i got through",
+        "i survived",
+        "i got out of bed",
+        "i got dressed",
+        "i showered",
+        "i made a call",
+        "i replied",
+        "i turned up"
+    };
+
+    private static readonly string[] ReminderPhrases =
+    {
+        "i need to",
+        "i have to",
+        "i should",
+        "i must",
+        "dont forget",
+        "don't forget",
+        "remind me",
+        "remember to",
+        "i need to remember",
+        "appointment",
+        "meeting",
+        "call",
+        "book",
+        "pay",
+        "pick up",
+        "collect"
+    };
+    private static string NormaliseIntentText(string message)
+    {
+        return message
+            .ToLowerInvariant()
+            .Replace("'", "")
+            .Replace("’", "")
+            .Trim();
+    }
+
     private readonly Dictionary<string, List<ArloResponse>> _responses = new()
     {
         ["overwhelmed"] = new()
@@ -141,12 +199,9 @@ public class ArloService : IArloService
         await TrySaveAutoCheckInAsync(state, userMessage);
         await TrySaveAutoWinAsync(userMessage);
 
-        var reminderSuggestion = string.Empty;
-
         if (LooksLikeReminderIntent(userMessage))
         {
             _pendingReminderText = CleanReminderText(userMessage);
-            
         }
 
         var aiRequest = new ArloAiRequest
@@ -168,7 +223,14 @@ public class ArloService : IArloService
 
         if (!string.IsNullOrWhiteSpace(aiReply))
         {
-            return aiReply + reminderSuggestion;
+            return aiReply;
+        }
+
+        var localIntentReply = BuildLocalIntentReply(userMessage);
+
+        if (!string.IsNullOrWhiteSpace(localIntentReply))
+        {
+            return localIntentReply;
         }
 
         if (_responses.TryGetValue(state, out var stateResponses))
@@ -192,10 +254,10 @@ public class ArloService : IArloService
 
             var gentleTaskNudge = BuildGentleTaskNudge(unfinishedTasks, state);
 
-            return CombineParts(emotionalContext, structuredReply, gentleTaskNudge) + reminderSuggestion;
+            return CombineParts(emotionalContext, structuredReply, gentleTaskNudge);
         }
 
-        return GetDefaultReply(emotionalContext, unfinishedTasks) + reminderSuggestion;
+        return GetDefaultReply(emotionalContext, unfinishedTasks);
     }
 
     private async Task TrySaveAutoWinAsync(string userMessage)
@@ -229,24 +291,7 @@ public class ArloService : IArloService
 
     }
 
-    private static bool LooksLikeAWin(string message)
-    {
-        var text = message
-            .ToLowerInvariant()
-            .Replace("'", "")
-            .Replace("’", "");
-
-        return text.Contains("i did")
-            || text.Contains("i managed")
-            || text.Contains("i finally")
-            || text.Contains("i completed")
-            || text.Contains("i finished")
-            || text.Contains("i sent")
-            || text.Contains("i cleaned")
-            || text.Contains("i made it")
-            || text.Contains("i showed up")
-            || text.Contains("i went");
-    }
+    
 
     private static string CleanWinText(string message)
     {
@@ -473,19 +518,17 @@ public class ArloService : IArloService
             _ => 3
         };
     }
+    private static bool LooksLikeAWin(string message)
+    {
+        var text = NormaliseIntentText(message);
+
+        return WinPhrases.Any(phrase => text.Contains(phrase));
+    }
     private static bool LooksLikeReminderIntent(string message)
     {
-        var text = message
-            .ToLowerInvariant()
-            .Replace("'", "")
-            .Replace("’", "");
+        var text = NormaliseIntentText(message);
 
-        return text.Contains("i need to")
-            || text.Contains("i have to")
-            || text.Contains("i should")
-            || text.Contains("remind me")
-            || text.Contains("dont let me forget")
-            || text.Contains("remember to");
+        return ReminderPhrases.Any(phrase => text.Contains(phrase));
     }
 
     private static string CleanReminderText(string message)
@@ -504,5 +547,19 @@ public class ArloService : IArloService
             return message.Trim();
 
         return char.ToUpper(cleaned[0]) + cleaned[1..];
+    }
+    private static string BuildLocalIntentReply(string userMessage)
+    {
+        if (LooksLikeAWin(userMessage))
+        {
+            return "That counts. I’ve saved that as a win.";
+        }
+
+        if (LooksLikeReminderIntent(userMessage))
+        {
+            return "That sounds like something you don’t want to lose track of. I can help you set a reminder for it.";
+        }
+
+        return string.Empty;
     }
 }

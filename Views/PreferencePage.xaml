@@ -16,25 +16,36 @@
                 TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
             <Label
-                Text="Update your name, reminders, and support settings."
+                Text="Keep Arlo personal, helpful, and low-effort."
                 FontSize="14"
                 TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
-                <VerticalStackLayout Spacing="16">
-
-                    <Label
-                        Text="What should I call you?"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-
-                    <Entry
-                        Placeholder="Your name or nickname"
-                        Text="{Binding Nickname}" />
+                <VerticalStackLayout Spacing="18">
 
                     <VerticalStackLayout Spacing="8">
                         <Label
-                            Text="Do you want medication reminders?"
+                            Text="What should Arlo call you?"
+                            FontSize="18"
+                            FontAttributes="Bold"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                        <Entry
+                            Placeholder="Your name or nickname"
+                            Text="{Binding Nickname}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label
+                            Text="Medication reminders"
+                            FontSize="18"
+                            FontAttributes="Bold"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
+                        <Label
+                            Text="Arlo can remind you when it’s time to take medication."
+                            FontSize="13"
+                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
                         <Switch
                             IsToggled="{Binding UsesMedicationSupport}"
@@ -47,41 +58,26 @@
                         Spacing="10">
 
                         <Label
-                            Text="What time would you like your reminder?"
+                            Text="Reminder time"
                             TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
                         <TimePicker
                             Time="{Binding ReminderTime}" />
 
                         <Label
-                            Text="When should reminders start?"
+                            Text="Start date"
                             TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
                         <DatePicker
                             Date="{Binding MedicationStartDate}" />
+
                     </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="8">
-                        <Label
-                            Text="Do you want task support?"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                    <Label
+                        Text="General reminders are handled through Arlo when you mention something you need to remember."
+                        FontSize="13"
+                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
 
-                        <Switch
-                            IsToggled="{Binding UsesTaskSupport}"
-                            ThumbColor="{StaticResource Primary}"
-                            OnColor="{StaticResource Primary}" />
-                    </VerticalStackLayout>
-
-                    <VerticalStackLayout Spacing="8">
-                        <Label
-                            Text="Show celebration when completing tasks?"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-
-                        <Switch
-                            IsToggled="{Binding EnableCelebration}"
-                            ThumbColor="{StaticResource Primary}"
-                            OnColor="{StaticResource Primary}" />
-                    </VerticalStackLayout>
                     <Label
                         Text="{Binding StatusMessage}"
                         Style="{StaticResource StatusMessageStyle}" />
@@ -90,6 +86,11 @@
                         Text="Save Preferences"
                         Command="{Binding SaveCommand}"
                         Style="{StaticResource PrimaryButtonStyle}" />
+
+                    <Button
+                        Text="About Arlo"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding ShowAboutArloCommand}" /> 
 
                 </VerticalStackLayout>
             </Frame>

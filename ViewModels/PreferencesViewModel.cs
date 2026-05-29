@@ -18,9 +18,6 @@ public partial class PreferencesViewModel : BaseViewModel
     private bool usesMedicationSupport;
 
     [ObservableProperty]
-    private bool usesTaskSupport = true;
-
-    [ObservableProperty]
     private TimeSpan reminderTime = new(9, 0, 0);
 
     [ObservableProperty]
@@ -28,9 +25,6 @@ public partial class PreferencesViewModel : BaseViewModel
 
     [ObservableProperty]
     private string statusMessage = string.Empty;
-
-    [ObservableProperty]
-    private bool enableCelebration = true;
 
     public PreferencesViewModel(
     IUserProfileService profileService,
@@ -52,10 +46,8 @@ public partial class PreferencesViewModel : BaseViewModel
 
         Nickname = profile.Nickname;
         UsesMedicationSupport = profile.UsesMedicationSupport;
-        UsesTaskSupport = profile.UsesTaskSupport;
         ReminderTime = profile.MedicationReminderTime ?? new TimeSpan(9, 0, 0);
         MedicationStartDate = profile.MedicationStartDate ?? DateTime.Today;
-        EnableCelebration = profile.EnableCelebration;
     }
 
     [RelayCommand]
@@ -79,12 +71,10 @@ public partial class PreferencesViewModel : BaseViewModel
             PreferredTone = existingProfile?.PreferredTone ?? string.Empty,
             ReminderStyle = existingProfile?.ReminderStyle ?? string.Empty,
             UsesMedicationSupport = UsesMedicationSupport,
-            UsesTaskSupport = UsesTaskSupport,
             MedicationReminderTime = UsesMedicationSupport ? ReminderTime : null,
             MedicationStartDate = UsesMedicationSupport ? MedicationStartDate : null,
             CreatedUtc = existingProfile?.CreatedUtc ?? DateTime.UtcNow,
-            UpdatedUtc = DateTime.UtcNow,
-            EnableCelebration = EnableCelebration
+            UpdatedUtc = DateTime.UtcNow
         };
 
         await _profileService.SaveProfileAsync(profile);
@@ -158,5 +148,22 @@ await Shell.Current.Navigation.PopModalAsync();
             StatusMessage = "Restore test failed.";
             System.Diagnostics.Debug.WriteLine($"[RestoreTest] Error: {ex}");
         }
+    }
+    [RelayCommand]
+    private async Task ShowAboutArlo()
+    {
+        await Shell.Current.DisplayAlert(
+            "About Arlo",
+            "Arlo is your low-effort support companion.\n\n" +
+            "You can talk to Arlo when you feel stuck, overwhelmed, anxious, low on energy, or just need somewhere to start.\n\n" +
+            "Arlo can help you:\n" +
+            "• feel a bit less alone in the moment\n" +
+            "• break things down without pressure\n" +
+            "• capture wins automatically\n" +
+            "• notice recent check-ins and progress\n" +
+            "• set reminders when you mention something you need to remember\n" +
+            "• support medication reminders if you turn them on\n\n" +
+            "! Arlo is not emergency, medical, or crisis support. If you feel unsafe or at risk, contact emergency services or someone you trust.",
+            "OK");
     }
 }
