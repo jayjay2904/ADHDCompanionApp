@@ -22,6 +22,8 @@ public partial class ArloViewModel : BaseViewModel
     private readonly ISpeechToTextService _speechToTextService;
     private readonly IServiceProvider _serviceProvider;
     private readonly IReminderEngine _reminderEngine;
+    private ConversationMode _currentConversationMode = ConversationMode.None;
+    private string? _pendingActionText;
 
     public event Action? ArloFinishedResponding;
 
@@ -289,6 +291,7 @@ public partial class ArloViewModel : BaseViewModel
     private void AcceptReminderSuggestion()
     {
         IsReminderSuggestionVisible = false;
+        _currentConversationMode = ConversationMode.ReminderSetup;
 
         ReminderDate = DateTime.Today;
         ReminderTime = DateTime.Now.AddHours(1).TimeOfDay;
@@ -339,7 +342,12 @@ public partial class ArloViewModel : BaseViewModel
         await _reminderEngine.ScheduleReminderAsync(request);
 
         IsReminderSetupVisible = false;
+        IsReminderSuggestionVisible = false;
+
         PendingReminderText = string.Empty;
+
+        _currentConversationMode = ConversationMode.None;
+        _pendingActionText = null;
 
         await Shell.Current.CurrentPage.DisplayAlert(
             "Reminder set",
@@ -350,7 +358,12 @@ public partial class ArloViewModel : BaseViewModel
     private void CancelReminderSetup()
     {
         IsReminderSetupVisible = false;
+        IsReminderSuggestionVisible = false;
+
         PendingReminderText = string.Empty;
+
+        _currentConversationMode = ConversationMode.None;
+        _pendingActionText = null;
     }
     private async Task ProcessMessageAsync(string input)
     {
@@ -376,22 +389,18 @@ public partial class ArloViewModel : BaseViewModel
 
         var replyText = await _arloService.GetReplyAsync(input);
 
-        if (input.Contains("need to", StringComparison.OrdinalIgnoreCase) ||
-            input.Contains("have to", StringComparison.OrdinalIgnoreCase) ||
-            input.Contains("should", StringComparison.OrdinalIgnoreCase) ||
-            input.Contains("remember to", StringComparison.OrdinalIgnoreCase) ||
-            input.Contains("appointment", StringComparison.OrdinalIgnoreCase) ||
-            input.Contains("meeting", StringComparison.OrdinalIgnoreCase) ||
-            input.Contains("don't let me forget", StringComparison.OrdinalIgnoreCase) ||
-            input.Contains("dont let me forget", StringComparison.OrdinalIgnoreCase) ||
-            input.Contains("remind me", StringComparison.OrdinalIgnoreCase))
+        if (LooksLikeReminderIntent(input))
         {
             PendingReminderText = CleanReminderText(input);
+            _pendingActionText = PendingReminderText;
+
             IsReminderSuggestionVisible = true;
+            _currentConversationMode = ConversationMode.ReminderSuggestion;
         }
-        else
+        else if (_currentConversationMode == ConversationMode.None)
         {
             IsReminderSuggestionVisible = false;
+            _pendingActionText = null;
         }
 
         System.Diagnostics.Debug.WriteLine($"[Arlo] Reply text: '{replyText}'");
@@ -469,5 +478,17 @@ public partial class ArloViewModel : BaseViewModel
         return string.IsNullOrWhiteSpace(cleaned)
             ? input.Trim()
             : cleaned;
+    }
+    private bool LooksLikeReminderIntent(string input)
+    {
+        return input.Contains("need to", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("have to", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("should", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("remember to", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("appointment", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("meeting", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("don't let me forget", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("dont let me forget", StringComparison.OrdinalIgnoreCase) ||
+               input.Contains("remind me", StringComparison.OrdinalIgnoreCase);
     }
 }

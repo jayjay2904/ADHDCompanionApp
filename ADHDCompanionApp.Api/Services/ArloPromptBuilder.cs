@@ -14,21 +14,31 @@ public class ArloPromptBuilder
         var modeGuidance = GetModeGuidance(responseMode);
         var recentChat = string.Join("\n", request.RecentChat.Take(4));
 
-        return $"""
-        ROLE: {_options.Role}
-        GOAL: {_options.Goal}
-        STYLE: {_options.Style}
-        AVOID: {_options.Avoid}
-        FORMAT: {_options.Format}
-        LIMITS: under {_options.WordLimit} words, max one question.
-        MODE: {responseMode}
-        MODE_GUIDANCE: {modeGuidance}
-        RECENT_PATTERN: {recentModes}
-        CONTEXT: {request.EmotionalContext}
-        TASKS: {openTasks}
-        USER: {request.Message}
-        RECENT_CHAT: {recentChat}
-        """;
+        var reminderGuidance = request.ReminderIntentDetected
+            ? """
+          REMINDER_GUIDANCE:
+          The app is already showing the user a reminder option below the chat.
+          Do not tell the user to write it down, make a note, set an alarm, or use another reminder system.
+          If useful, gently refer to the reminder option that is already available.
+          """
+            : string.Empty;
+
+            return $"""
+            ROLE: {_options.Role}
+            GOAL: {_options.Goal}
+            STYLE: {_options.Style}
+            AVOID: {_options.Avoid}
+            FORMAT: {_options.Format}
+            LIMITS: under {_options.WordLimit} words, max one question.
+            MODE: {responseMode}
+            MODE_GUIDANCE: {modeGuidance}
+            {reminderGuidance}
+            RECENT_PATTERN: {recentModes}
+            CONTEXT: {request.EmotionalContext}
+            TASKS: {openTasks}
+            USER: {request.Message}
+            RECENT_CHAT: {recentChat}
+            """;
     }
 
     public ArloPromptBuilder(IOptions<ArloPromptOptions> options)

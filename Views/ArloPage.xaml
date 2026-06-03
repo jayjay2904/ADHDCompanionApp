@@ -162,7 +162,7 @@
 
                                     <helpers:ChatMessageTemplateSelector.ArloTemplate>
                                         <DataTemplate>
-                                            <Grid ColumnDefinitions="52,8*" ColumnSpacing="6">
+                                            <Grid ColumnDefinitions="70,*" ColumnSpacing="2">
 
                                                 <Image
                                                     Grid.Column="0"
@@ -175,7 +175,8 @@
                                                 <Frame
                                                     Grid.Column="1"
                                                     Style="{StaticResource ArloBubbleStyle}"
-                                                    HorizontalOptions="Fill">
+                                                    HorizontalOptions="FillAndExpand"
+                                                    Margin="-4,0,0,0">  
 
                                                     <Label
                                                         Text="{Binding Text}"

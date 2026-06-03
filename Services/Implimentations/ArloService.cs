@@ -181,6 +181,8 @@ public class ArloService : IArloService
 
     public async Task<string> GetReplyAsync(string userMessage)
     {
+        var responsePath = DetermineResponsePath(userMessage);
+
         var message = userMessage.Trim().ToLowerInvariant();
 
         var latestCheckIn = await _checkInService.GetLatestCheckInAsync();
@@ -199,24 +201,36 @@ public class ArloService : IArloService
         await TrySaveAutoCheckInAsync(state, userMessage);
         await TrySaveAutoWinAsync(userMessage);
 
-        if (LooksLikeReminderIntent(userMessage))
+       
+
+        switch (responsePath)
         {
-            _pendingReminderText = CleanReminderText(userMessage);
+            case ResponsePath.Crisis:
+                return GetCrisisResponse();
+
+            case ResponsePath.Reminder:
+                _pendingReminderText = CleanReminderText(userMessage);
+                return GetReminderResponse();
         }
+
+        var reminderIntentDetected = LooksLikeReminderIntent(userMessage);
 
         var aiRequest = new ArloAiRequest
         {
             UserMessage = userMessage,
             EmotionalContext = emotionalContext,
-            RecentChat = _messages
-                .TakeLast(3)
-                .Select(m => $"{(m.IsFromUser ? "U" : "A")}: {m.Text}")
-                .ToList(),
+            RecentChat = ShouldIgnoreRecentChatFor(input: userMessage)
+                ? new List<string>()
+                : _messages
+                    .TakeLast(3)
+                    .Select(m => $"{(m.IsFromUser ? "U" : "A")}: {m.Text}")
+                    .ToList(),
             OpenTasks = unfinishedTasks
                 .Take(3)
                 .Select(t => t.Title)
                 .ToList(),
-            RecentModes = _recentModes.ToList()
+            RecentModes = _recentModes.ToList(),
+            ReminderIntentDetected = reminderIntentDetected
         };
 
         var aiReply = await _arloAiClient.GetReplyAsync(aiRequest);
@@ -270,6 +284,7 @@ public class ArloService : IArloService
         if (!LooksLikeAWin(message))
             return;
 
+        var cleanedText = CleanWinText(message);
         var now = DateTime.UtcNow;
 
         if (_lastAutoWinUtc.HasValue &&
@@ -278,9 +293,23 @@ public class ArloService : IArloService
             return;
         }
 
+        var recentWins = await _winService.GetRecentWinsAsync();
+
+        var alreadyExists = recentWins.Any(w =>
+            string.Equals(
+                w.Text?.Trim(),
+                cleanedText,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (alreadyExists)
+        {
+            Debug.WriteLine($"WIN SKIPPED DUPLICATE: {cleanedText}");
+            return;
+        }
+
         var win = new WinEntry
         {
-            Text = CleanWinText(message),
+            Text = cleanedText,
             TimestampUtc = now
         };
 
@@ -288,10 +317,8 @@ public class ArloService : IArloService
         _lastAutoWinUtc = now;
 
         Debug.WriteLine($"WIN SAVED: {win.Text}");
-
     }
 
-    
 
     private static string CleanWinText(string message)
     {
@@ -557,9 +584,100 @@ public class ArloService : IArloService
 
         if (LooksLikeReminderIntent(userMessage))
         {
-            return "That sounds like something you don’t want to lose track of. I can help you set a reminder for it.";
+            return "That sounds worth remembering. I’ve got a reminder option ready for you below if that would help.";
         }
 
         return string.Empty;
+    }
+    private static bool ShouldIgnoreRecentChatFor(string input)
+    {
+        var text = NormaliseIntentText(input);
+
+        return text is "im anxious"
+            or "i am anxious"
+            or "anxious"
+            or "im overwhelmed"
+            or "i am overwhelmed"
+            or "overwhelmed"
+            or "im stuck"
+            or "i am stuck"
+            or "stuck"
+            or "i cant start"
+            or "cant start"
+            or "i feel stuck"
+            or "i feel anxious"
+            or "i feel overwhelmed";
+    }
+    
+    private enum ResponsePath
+    {
+        AI,
+        Reminder,
+        Crisis
+    }
+
+    private ResponsePath DetermineResponsePath(string input)
+    {
+        if (LooksLikeCrisisIntent(input))
+            return ResponsePath.Crisis;
+
+        if (LooksLikeReminderIntent(input))
+            return ResponsePath.Reminder;
+
+        return ResponsePath.AI;
+    }
+
+    private static bool LooksLikeCrisisIntent(string input)
+    {
+        var text = NormaliseIntentText(input);
+
+        return text.Contains("suicide")
+            || text.Contains("kill myself")
+            || text.Contains("end my life")
+            || text.Contains("self harm")
+            || text.Contains("selfharm")
+            || text.Contains("hurt myself")
+            || text.Contains("want to die")
+            || text.Contains("dont want to be here")
+            || text.Contains("dont want to live")
+            || text.Contains("better off without me")
+            || text.Contains("no one would miss me")
+            || text.Contains("nobody would miss me")
+            || text.Contains("everyone would be better off")
+            || text.Contains("cant go on")
+            || text.Contains("top myself")
+            || text.Contains("cannot go on")
+            || text.Contains("slash my wrists")
+            || text.Contains("cut my wrists")
+            || text.Contains("slit my wrists")
+            || text.Contains("overdose")
+            || text.Contains("take an overdose")
+            || text.Contains("wish i was dead")
+            || text.Contains("wish i were dead")
+            || text.Contains("want to disappear")
+            || text.Contains("end it all")
+            || text.Contains("i want it all to stop")
+            || text.Contains("cut myself")
+            || text.Contains("cutting myself");
+    }
+
+    private static string GetReminderResponse()
+    {
+        return "That sounds worth remembering. Would you like me to help you set a reminder?";
+    }
+
+    private static string GetCrisisResponse()
+    {
+        return """
+        I'm really glad you told me.
+
+        You don't have to handle this alone.
+
+        Please contact someone you trust or a crisis support service right now.
+
+        If you're in immediate danger, call emergency services or your local crisis line.
+
+        Who could you reach out to first?
+        """;
     }
 }

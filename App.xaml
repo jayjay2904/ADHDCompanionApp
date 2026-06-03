@@ -179,22 +179,22 @@
 
             <!-- Arlo Bubble -->
             <Style TargetType="Frame" x:Key="ArloBubbleStyle">
-                <Setter Property="Padding" Value="14" />
-                <Setter Property="Margin" Value="0,6,40,0" />
+                <Setter Property="Padding" Value="12" />
+                <Setter Property="Margin" Value="0,4,0,0" />
                 <Setter Property="CornerRadius" Value="18" />
                 <Setter Property="HasShadow" Value="True" />
+                <Setter Property="HorizontalOptions" Value="FillAndExpand" />
                 <Setter Property="BackgroundColor"
-                        Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
+                    Value="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}" />
                 <Setter Property="BorderColor"
-                        Value="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" />
-                <Setter Property="HorizontalOptions" Value="Start" />
+                    Value="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}" />
                 <Setter Property="Shadow">
                     <Setter.Value>
                         <Shadow
-                            Brush="#12000000"
-                            Offset="0,3"
-                            Radius="10"
-                            Opacity="0.22" />
+                Brush="#12000000"
+                Offset="0,3"
+                Radius="10"
+                Opacity="0.22" />
                     </Setter.Value>
                 </Setter>
             </Style>

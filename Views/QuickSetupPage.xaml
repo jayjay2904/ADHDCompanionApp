@@ -17,7 +17,13 @@
                 HeightRequest="150"
                 WidthRequest="150"
                 HorizontalOptions="Center"
-                Aspect="AspectFit" />   
+                Aspect="AspectFit" />
+
+            <Label
+                Text="Arlo Alpha 0.1"
+                FontSize="12"
+                HorizontalOptions="Center"
+                TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
 
             <Label
                 Text="Hi, I’m Arlo. What’s your name?"
@@ -25,7 +31,7 @@
                 FontAttributes="Bold"
                 HorizontalTextAlignment="Center"
                 HorizontalOptions="Center"
-                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" /> 
+                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
 
             <Frame Style="{StaticResource CardFrameStyle}">
                 <VerticalStackLayout Spacing="18">
@@ -44,6 +50,11 @@
                             PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                     </VerticalStackLayout>
 
+                    <Label
+                        Text="A couple of important things to know:"
+                        FontAttributes="Bold"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+
                     <Frame
                         Padding="14"
                         CornerRadius="18"
@@ -51,15 +62,42 @@
                         BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceAltLight}, Dark={StaticResource SurfaceAltDark}}"
                         BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}">
 
-                        <VerticalStackLayout Spacing="10">
+                        <VerticalStackLayout Spacing="12">
 
-                            <Label
-                                Text="A quick note"
-                                FontAttributes="Bold"
-                                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                            <HorizontalStackLayout Spacing="8">
+                                <Label
+                                    Text="⚠"
+                                    FontSize="18"
+                                    VerticalOptions="Center" /> 
+
+                                <Label
+                                    Text="Disclaimer"
+                                    FontAttributes="Bold"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" /> 
+                            </HorizontalStackLayout>
 
                             <Label
                                 Text="Arlo is here to offer gentle support, reflection, and practical next steps. Arlo is not a medical, mental health, or emergency service. If you feel at risk of harm or need urgent help, contact emergency services or a trusted person immediately."
+                                FontSize="13"
+                                LineBreakMode="WordWrap"
+                                TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+
+                            <HorizontalStackLayout Spacing="8">
+                                <Label
+                                    Text="🔒"
+                                    FontSize="18"
+                                    VerticalOptions="Center" /> 
+
+                                <Label
+                                    Text="Privacy and Data"
+                                    FontAttributes="Bold"
+                                    VerticalOptions="Center"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" /> 
+                            </HorizontalStackLayout>
+
+                            <Label
+                                Text="Arlo stores your check-ins, wins, reminders, and preferences on your device. When you send a message to Arlo, that message may be sent securely to Arlo’s AI service so a response can be generated. Arlo does not sell your personal data."
                                 FontSize="13"
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
@@ -74,7 +112,7 @@
                             VerticalOptions="Start" />
 
                         <Label
-                            Text="I understand that Arlo is not a replacement for professional or emergency support."
+                            Text="I understand that Arlo is not a replacement for professional or emergency support, and that messages I send to Arlo may be sent securely to an AI service to generate responses."
                             FontSize="13"
                             LineBreakMode="WordWrap"
                             HorizontalOptions="FillAndExpand"
@@ -84,6 +122,7 @@
                     <Button
                         Text="Continue"
                         Command="{Binding SaveCommand}"
+                        IsEnabled="{Binding HasAcceptedDisclaimer}"
                         Style="{StaticResource PrimaryButtonStyle}" />
 
                 </VerticalStackLayout>

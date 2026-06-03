@@ -50,7 +50,7 @@ namespace ADHDCompanionApp
 
             builder.Services.AddSingleton(new HttpClient
             {
-                BaseAddress = new Uri("http://192.168.4.221:5276/"),
+                BaseAddress = new Uri("https://adhdcompanionapp.onrender.com/"),
                 Timeout = TimeSpan.FromSeconds(45)
             });
 
