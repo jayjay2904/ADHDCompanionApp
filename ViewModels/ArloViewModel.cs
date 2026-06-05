@@ -24,6 +24,7 @@ public partial class ArloViewModel : BaseViewModel
     private readonly IReminderEngine _reminderEngine;
     private ConversationMode _currentConversationMode = ConversationMode.None;
     private string? _pendingActionText;
+    private bool _isProcessingMessage;
 
     public event Action? ArloFinishedResponding;
 
@@ -370,99 +371,183 @@ public partial class ArloViewModel : BaseViewModel
         if (string.IsNullOrWhiteSpace(input))
             return;
 
-        var userMessage = new ChatMessage
+        if (_isProcessingMessage)
+            return;
+
+        _isProcessingMessage = true;
+
+        ChatMessage? waitingMessage = null;
+        var isWaiting = true;
+
+        try
         {
-            Role = "User",
-            Text = input.Trim()
-        };
+            var trimmedInput = input.Trim();
 
-        await MainThread.InvokeOnMainThreadAsync(() =>
-        {
-            Messages.Add(userMessage);
-        });
-
-        await _arloService.AddMessageAsync(userMessage);
-
-        AreQuickPromptsVisible = false;
-
-        await Task.Delay(400);
-
-        var replyText = await _arloService.GetReplyAsync(input);
-
-        if (LooksLikeReminderIntent(input))
-        {
-            PendingReminderText = CleanReminderText(input);
-            _pendingActionText = PendingReminderText;
-
-            IsReminderSuggestionVisible = true;
-            _currentConversationMode = ConversationMode.ReminderSuggestion;
-        }
-        else if (_currentConversationMode == ConversationMode.None)
-        {
-            IsReminderSuggestionVisible = false;
-            _pendingActionText = null;
-        }
-
-        System.Diagnostics.Debug.WriteLine($"[Arlo] Reply text: '{replyText}'");
-
-        if (string.IsNullOrWhiteSpace(replyText))
-        {
-            replyText = "Yeah — I’m here. Let’s keep this small. Take one slow breath, then pick the smallest next step.";
-        }
-
-        var arloReply = new ChatMessage
-        {
-            Id = Guid.NewGuid().ToString(),
-            Role = "Arlo",
-            Text = string.Empty,
-            TimestampUtc = DateTime.UtcNow
-        };
-
-        await MainThread.InvokeOnMainThreadAsync(() =>
-        {
-            Messages.Add(arloReply);
-        });
-
-        var words = replyText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var currentText = string.Empty;
-
-        foreach (var word in words)
-        {
-            currentText +=
-                (string.IsNullOrWhiteSpace(currentText) ? "" : " ")
-                + word;
-
-            var updatedMessage = new ChatMessage
+            var userMessage = new ChatMessage
             {
-                Id = arloReply.Id,
-                Role = "Arlo",
-                Text = currentText,
-                TimestampUtc = arloReply.TimestampUtc
+                Id = Guid.NewGuid().ToString(),
+                Role = "User",
+                Text = trimmedInput,
+                TimestampUtc = DateTime.UtcNow
             };
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                var index = Messages.IndexOf(arloReply);
+                Messages.Add(userMessage);
+            });
 
-                if (index >= 0)
+            await _arloService.AddMessageAsync(userMessage);
+
+            AreQuickPromptsVisible = false;
+
+            await Task.Delay(400);
+
+            waitingMessage = new ChatMessage
+            {
+                Id = Guid.NewGuid().ToString(),
+                Role = "Arlo",
+                Text = ".",
+                TimestampUtc = DateTime.UtcNow
+            };
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                Messages.Add(waitingMessage);
+            });
+
+            var animationTask = Task.Run(async () =>
+            {
+                var frames = new[] { ".", "..", "...", "....", "..." };
+                var frameIndex = 0;
+
+                while (isWaiting)
                 {
-                    Messages[index] = updatedMessage;
-                    arloReply = updatedMessage;
+                    var frame = frames[frameIndex];
+
+                    await MainThread.InvokeOnMainThreadAsync(() =>
+                    {
+                        var index = Messages.IndexOf(waitingMessage);
+
+                        if (index >= 0)
+                        {
+                            var updatedWaitingMessage = new ChatMessage
+                            {
+                                Id = waitingMessage.Id,
+                                Role = "Arlo",
+                                Text = frame,
+                                TimestampUtc = waitingMessage.TimestampUtc
+                            };
+
+                            Messages[index] = updatedWaitingMessage;
+                            waitingMessage = updatedWaitingMessage;
+                        }
+                    });
+
+                    frameIndex = (frameIndex + 1) % frames.Length;
+
+                    await Task.Delay(300);
                 }
             });
 
-            await Task.Delay(35);
+            var replyText = await _arloService.GetReplyAsync(trimmedInput);
+
+            isWaiting = false;
+            await animationTask;
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (waitingMessage is not null)
+                {
+                    Messages.Remove(waitingMessage);
+                }
+            });
+
+            if (LooksLikeReminderIntent(trimmedInput))
+            {
+                PendingReminderText = CleanReminderText(trimmedInput);
+                _pendingActionText = PendingReminderText;
+
+                IsReminderSuggestionVisible = true;
+                _currentConversationMode = ConversationMode.ReminderSuggestion;
+            }
+            else if (_currentConversationMode == ConversationMode.None)
+            {
+                IsReminderSuggestionVisible = false;
+                _pendingActionText = null;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[Arlo] Reply text: '{replyText}'");
+
+            if (string.IsNullOrWhiteSpace(replyText))
+            {
+                replyText = "Yeah — I’m here. Let’s keep this small. Take one slow breath, then pick the smallest next step.";
+            }
+
+            var arloReply = new ChatMessage
+            {
+                Id = Guid.NewGuid().ToString(),
+                Role = "Arlo",
+                Text = string.Empty,
+                TimestampUtc = DateTime.UtcNow
+            };
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                Messages.Add(arloReply);
+            });
+
+            var words = replyText.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var currentText = string.Empty;
+
+            foreach (var word in words)
+            {
+                currentText +=
+                    (string.IsNullOrWhiteSpace(currentText) ? "" : " ")
+                    + word;
+
+                var updatedMessage = new ChatMessage
+                {
+                    Id = arloReply.Id,
+                    Role = "Arlo",
+                    Text = currentText,
+                    TimestampUtc = arloReply.TimestampUtc
+                };
+
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    var index = Messages.IndexOf(arloReply);
+
+                    if (index >= 0)
+                    {
+                        Messages[index] = updatedMessage;
+                        arloReply = updatedMessage;
+                    }
+                });
+
+                await Task.Delay(35);
+            }
+
+            await _arloService.AddMessageAsync(arloReply);
+
+            ArloFinishedResponding?.Invoke();
         }
+        finally
+        {
+            isWaiting = false;
+            _isProcessingMessage = false;
 
-        await _arloService.AddMessageAsync(arloReply);
-
-        ArloFinishedResponding?.Invoke();
+            if (waitingMessage is not null)
+            {
+                await MainThread.InvokeOnMainThreadAsync(() =>
+                {
+                    Messages.Remove(waitingMessage);
+                });
+            }
+        }
     }
     private async void ShowProgress()
     {
         var popup = _serviceProvider.GetRequiredService<ProgressSummaryPopup>();
-
-        await popup.LoadAsync();
 
         Shell.Current.CurrentPage.ShowPopup(popup);
     }
@@ -479,6 +564,7 @@ public partial class ArloViewModel : BaseViewModel
             ? input.Trim()
             : cleaned;
     }
+
     private bool LooksLikeReminderIntent(string input)
     {
         return input.Contains("need to", StringComparison.OrdinalIgnoreCase) ||

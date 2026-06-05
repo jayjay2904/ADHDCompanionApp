@@ -18,6 +18,9 @@ public class ArloService : IArloService
     private DateTime? _lastAutoCheckInUtc;
     private DateTime? _lastAutoWinUtc;
     private string? _pendingReminderText;
+    private bool _isSavingAutoCheckIn;
+    private string? _lastAutoCheckInMessage;
+    private DateTime? _lastAutoCheckInAttemptUtc;
 
     private static readonly string[] WinPhrases =
     {
@@ -198,7 +201,7 @@ public class ArloService : IArloService
         var state = DetectState(message);
         TrackRecentMode(state);
 
-        await TrySaveAutoCheckInAsync(state, userMessage);
+        await TrySaveAutoCheckInAsync(userMessage);
         await TrySaveAutoWinAsync(userMessage);
 
        
@@ -489,32 +492,58 @@ public class ArloService : IArloService
 
         return combined;
     }
-    private async Task TrySaveAutoCheckInAsync(string state, string userMessage)
+    private async Task TrySaveAutoCheckInAsync(string userMessage)
     {
-        if (string.IsNullOrWhiteSpace(state) || state == "default")
+        if (string.IsNullOrWhiteSpace(userMessage))
             return;
 
+        var note = userMessage.Trim();
         var now = DateTime.UtcNow;
 
-        // Only auto-save one check-in every 4 hours for now
-        if (_lastAutoCheckInUtc.HasValue &&
-            now - _lastAutoCheckInUtc.Value < TimeSpan.FromHours(4))
+        if (_isSavingAutoCheckIn)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(_lastAutoCheckInMessage) &&
+            string.Equals(_lastAutoCheckInMessage, note, StringComparison.OrdinalIgnoreCase) &&
+            _lastAutoCheckInAttemptUtc.HasValue &&
+            now - _lastAutoCheckInAttemptUtc.Value < TimeSpan.FromSeconds(10))
         {
+            Debug.WriteLine($"[Arlo] Auto check-in skipped duplicate message: {note}");
             return;
         }
 
-        var checkIn = new CheckInEntry
-        {
-            Mood = state,
-            Note = userMessage,
-            TimestampUtc = now,
-            EnergyLevel = EstimateEnergyLevel(state),
-            FocusLevel = EstimateFocusLevel(state)
-        };
+        _isSavingAutoCheckIn = true;
+        _lastAutoCheckInMessage = note;
+        _lastAutoCheckInAttemptUtc = now;
 
-        await _checkInService.SaveCheckInAsync(checkIn);
-        Debug.WriteLine($"CHECK-IN SAVED: {checkIn.Mood}");
-        _lastAutoCheckInUtc = now;
+        try
+        {
+            var detectedState = DetectState(NormaliseIntentText(note));
+
+            if (detectedState == "default")
+                detectedState = "general";
+
+            Debug.WriteLine($"[Arlo] Auto check-in state: {detectedState} | note: {note}");
+
+            var checkIn = new CheckInEntry
+            {
+                Mood = detectedState,
+                Note = note,
+                TimestampUtc = now,
+                EnergyLevel = EstimateEnergyLevel(detectedState),
+                FocusLevel = EstimateFocusLevel(detectedState)
+            };
+
+            await _checkInService.SaveCheckInAsync(checkIn);
+
+            _lastAutoCheckInUtc = now;
+
+            Debug.WriteLine($"[Arlo] Auto check-in saved: {checkIn.Mood}");
+        }
+        finally
+        {
+            _isSavingAutoCheckIn = false;
+        }
     }
     private static int EstimateEnergyLevel(string state)
     {
@@ -527,6 +556,7 @@ public class ArloService : IArloService
             "failed" => 2,
             "anxious" => 3,
             "okay" => 4,
+            "general" => 3,
             _ => 3
         };
     }
@@ -542,6 +572,7 @@ public class ArloService : IArloService
             "low_energy" => 2,
             "anxious" => 2,
             "okay" => 4,
+            "general" => 3,
             _ => 3
         };
     }
