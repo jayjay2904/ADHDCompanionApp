@@ -278,7 +278,7 @@
                 CornerRadius="28"
                 Padding="8"
                 HasShadow="False"
-                VerticalOptions="End">
+                VerticalOptions="End">  
 
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
 
@@ -295,18 +295,22 @@
                         FontAttributes="Bold"
                         Command="{Binding ShowPromptsCommand}"
                         Pressed="OnPromptPlusPressed"
-                        Released="OnPromptPlusReleased" />
+                        Released="OnPromptPlusReleased" />  
 
-                    <Entry
-                        x:Name="UserInputEntry"
+                    <Editor
+                        x:Name="UserInputEditor"
                         Grid.Column="1"
                         Placeholder="What’s going on?"
                         Text="{Binding UserInput}"
-                        ReturnType="Send"
-                        Completed="OnUserInputCompleted"
+                        AutoSize="TextChanges"
+                        MinimumHeightRequest="44"
+                        MaximumHeightRequest="130"
                         BackgroundColor="Transparent"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
-                        PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
+                        PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                        VerticalOptions="Center"
+                        HorizontalOptions="FillAndExpand"
+                        FontSize="16" />    
 
                     <ImageButton
                         Grid.Column="2"
@@ -317,7 +321,7 @@
                         Command="{Binding ListenCommand}"
                         HorizontalOptions="Center"
                         VerticalOptions="Center"
-                        Padding="0" />
+                        Padding="0" />  
 
                     <Button
                         Grid.Column="3"
@@ -332,7 +336,7 @@
                         FontAttributes="Bold"
                         Command="{Binding SendMessageCommand}"
                         Pressed="OnSendButtonPressed"
-                        Released="OnSendButtonReleased" />
+                        Released="OnSendButtonReleased" />  
 
                 </Grid>
 
