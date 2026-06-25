@@ -23,6 +23,7 @@ public partial class AppShell : Shell
         
         Routing.RegisterRoute(nameof(PreferencesPage), typeof(PreferencesPage));
         Routing.RegisterRoute(nameof(ProgressSummaryPopup), typeof(ProgressSummaryPopup));
+        Routing.RegisterRoute(nameof(MeetArloPage), typeof(QuickSetupPage));
     }
 
     protected override async void OnAppearing()

@@ -1,7 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using ADHDCompanionApp.Models.Entities;
+﻿using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.Services.Interfaces;
+using ADHDCompanionApp.Views;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
 
 namespace ADHDCompanionApp.ViewModels;
 
@@ -74,12 +76,17 @@ public partial class QuickSetupViewModel : BaseViewModel
             if (Shell.Current is AppShell shell)
             {
                 await shell.UpdateNavigationForSetupStateAsync();
-                await shell.GoToAsync("//ArloPage");
             }
-            else
+
+            var hasSeenArloGuide = Preferences.Get("HasSeenArloGuide", false);
+
+            if (!hasSeenArloGuide)
             {
-                await Shell.Current.GoToAsync("//ArloPage");
+                await Shell.Current.GoToAsync(nameof(MeetArloPage));
+                return;
             }
+
+            await Shell.Current.GoToAsync("//ArloPage");
         }
         catch (Exception ex)
         {

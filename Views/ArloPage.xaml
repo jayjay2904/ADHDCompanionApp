@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
+
 <ContentPage
     x:Class="ADHDCompanionApp.Views.ArloPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
@@ -41,6 +42,7 @@
                     VerticalOptions="Center">
 
                     <Image
+                        x:Name="ArloMainImage"
                         Source="arlo_main.png"
                         HeightRequest="140"
                         WidthRequest="140"
@@ -176,7 +178,7 @@
                                                     Grid.Column="1"
                                                     Style="{StaticResource ArloBubbleStyle}"
                                                     HorizontalOptions="FillAndExpand"
-                                                    Margin="-4,0,0,0">  
+                                                    Margin="-4,0,0,0">
 
                                                     <Label
                                                         Text="{Binding Text}"
@@ -271,76 +273,117 @@
             </Frame>
 
             <!-- Chat-style Input -->
-            <Frame
-                Grid.Row="3"
-                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceLight}, Dark={StaticResource SurfaceDark}}"
-                BorderColor="{AppThemeBinding Light={StaticResource BorderLight}, Dark={StaticResource BorderDark}}"
-                CornerRadius="28"
-                Padding="8"
-                HasShadow="False"
-                VerticalOptions="End">  
+            <Grid Grid.Row="3">
 
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                <!-- Soft shadow layer behind input -->
+                <BoxView
+                    x:Name="ChatInputShadow"
+                    Color="#9B6AD6"
+                    CornerRadius="28"
+                    Opacity="0.20"
+                    Margin="8,8,-2,-10"
+                    Scale="1.02" />
 
-                    <Button
-                        Grid.Column="0"
-                        Text="+"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        CornerRadius="22"
-                        Padding="0"
-                        BackgroundColor="Transparent"
-                        TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
-                        FontSize="26"
-                        FontAttributes="Bold"
-                        Command="{Binding ShowPromptsCommand}"
-                        Pressed="OnPromptPlusPressed"
-                        Released="OnPromptPlusReleased" />  
+                <Border
+                    x:Name="ChatInputFrame"
+                    BackgroundColor="#FFFDF8"
+                    Stroke="#D7BFEA"
+                    StrokeThickness="1"
+                    Padding="12"
+                    VerticalOptions="End">  
 
-                    <Editor
-                        x:Name="UserInputEditor"
-                        Grid.Column="1"
-                        Placeholder="What’s going on?"
-                        Text="{Binding UserInput}"
-                        AutoSize="TextChanges"
-                        MinimumHeightRequest="44"
-                        MaximumHeightRequest="130"
-                        BackgroundColor="Transparent"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
-                        PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
-                        VerticalOptions="Center"
-                        HorizontalOptions="FillAndExpand"
-                        FontSize="16" />    
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="28"/>
+                    </Border.StrokeShape>
 
-                    <ImageButton
-                        Grid.Column="2"
-                        Source="mic.png"
-                        WidthRequest="22"
-                        HeightRequest="22"
-                        BackgroundColor="Transparent"
-                        Command="{Binding ListenCommand}"
-                        HorizontalOptions="Center"
-                        VerticalOptions="Center"
-                        Padding="0" />  
+                    <Border.Shadow>
 
-                    <Button
-                        Grid.Column="3"
-                        Text="➜"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        CornerRadius="22"
-                        Padding="0"
-                        BackgroundColor="{StaticResource Primary}"
-                        TextColor="#F5F1E8"
-                        FontSize="22"
-                        FontAttributes="Bold"
-                        Command="{Binding SendMessageCommand}"
-                        Pressed="OnSendButtonPressed"
-                        Released="OnSendButtonReleased" />  
+                        <Shadow
+                            Brush="#30000000"
+                            Offset="0,10"
+                            Radius="28"
+                            Opacity="0.5"/> 
 
-                </Grid>
+                    </Border.Shadow>
 
-            </Frame>
+                    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
+
+                        <Button
+                            Grid.Column="0"
+                            Text="💡"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            CornerRadius="22"
+                            Padding="0"
+                            BackgroundColor="#F1E5FA"
+                            TextColor="#7A4FA3"
+                            FontSize="24"
+                            Command="{Binding ShowPromptsCommand}"
+                            Pressed="OnPromptPlusPressed"
+                            Released="OnPromptPlusReleased" />
+
+                        <BoxView
+                            Grid.Column="1"
+                            WidthRequest="1"
+                            HeightRequest="30"
+                            BackgroundColor="#D7BFEA"
+                            VerticalOptions="Center" />
+
+                        <Editor
+                            x:Name="UserInputEditor"
+                            Grid.Column="2"
+                            Focused="UserInputEditor_Focused"
+                            Placeholder="What’s on your mind?"
+                            Text="{Binding UserInput}"
+                            AutoSize="TextChanges"
+                            MinimumHeightRequest="58"
+                            MaximumHeightRequest="130"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                            PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                            VerticalOptions="Center"
+                            HorizontalOptions="FillAndExpand"
+                            FontSize="14" />
+
+                        <BoxView
+                            Grid.Column="3"
+                            WidthRequest="1"
+                            HeightRequest="30"
+                            BackgroundColor="#D7BFEA"
+                            VerticalOptions="Center" />
+
+                        <ImageButton
+                            Grid.Column="4"
+                            Source="mic.png"
+                            WidthRequest="30"
+                            HeightRequest="30"
+                            BackgroundColor="Transparent"
+                            Command="{Binding ListenCommand}"
+                            Clicked="OnMicButtonClicked"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            Padding="0" />
+
+                        <Button
+                            Grid.Column="5"
+                            Text="➜"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            CornerRadius="22"
+                            Padding="0"
+                            BackgroundColor="{StaticResource Primary}"
+                            TextColor="#F5F1E8"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            Command="{Binding SendMessageCommand}"
+                            Pressed="OnSendButtonPressed"
+                            Released="OnSendButtonReleased" />
+
+                    </Grid>
+
+                </Border>
+
+            </Grid>
 
         </Grid>
 

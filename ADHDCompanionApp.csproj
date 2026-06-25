@@ -129,6 +129,9 @@
 	  <MauiXaml Update="Views\ArloPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\MeetArloPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\PreferencePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

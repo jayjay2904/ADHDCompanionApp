@@ -9,4 +9,9 @@ public partial class PreferencesPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
     }
+    private async void HowToUseArlo_Clicked(object sender, EventArgs e)
+    {
+        await Shell.Current.Navigation.PushModalAsync(
+            new MeetArloPage(fromPreferences: true));
+    }
 }

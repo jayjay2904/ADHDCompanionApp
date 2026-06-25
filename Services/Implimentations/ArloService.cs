@@ -52,25 +52,67 @@ public class ArloService : IArloService
         "i turned up"
     };
 
-    private static readonly string[] ReminderPhrases =
+    private static readonly string[] ExplicitReminderPhrases =
+{
+    "remind me to",
+    "can you remind me",
+    "please remind me",
+    "dont let me forget",
+    "don't let me forget",
+    "remember to",
+    "i need to remember to",
+    "i have to remember to"
+};
+
+    private static readonly string[] AppointmentReminderPhrases =
     {
-        "i need to",
-        "i have to",
-        "i should",
-        "i must",
-        "dont forget",
-        "don't forget",
-        "remind me",
-        "remember to",
-        "i need to remember",
-        "appointment",
-        "meeting",
-        "call",
-        "book",
-        "pay",
-        "pick up",
-        "collect"
-    };
+    "book an appointment",
+    "make an appointment",
+    "arrange an appointment",
+    "schedule an appointment",
+    "need to book an appointment",
+    "need to make an appointment",
+    "need to arrange an appointment",
+
+    "i have an appointment",
+    "ive got an appointment",
+    "i've got an appointment",
+    "got an appointment",
+    "appointment with",
+    "appointment at",
+    "appointment on",
+
+    "call the doctor",
+    "phone the doctor",
+    "ring the doctor",
+    "call the dentist",
+    "phone the dentist",
+    "ring the dentist"
+};
+
+    private static readonly string[] TaskReminderPhrases =
+    {
+    "i need to pay",
+    "i need to call",
+    "i need to phone",
+    "i need to ring",
+    "i need to collect",
+    "i need to pick up",
+
+    "i have to pay",
+    "i have to call",
+    "i have to phone",
+    "i have to ring",
+    "i have to collect",
+    "i have to pick up",
+
+    "i must pay",
+    "i must call",
+    "i must phone",
+    "i must ring",
+    "i must collect",
+    "i must pick up"
+};
     private static string NormaliseIntentText(string message)
     {
         return message
@@ -586,7 +628,9 @@ public class ArloService : IArloService
     {
         var text = NormaliseIntentText(message);
 
-        return ReminderPhrases.Any(phrase => text.Contains(phrase));
+        return ExplicitReminderPhrases.Any(phrase => text.Contains(phrase))
+            || AppointmentReminderPhrases.Any(phrase => text.Contains(phrase))
+            || TaskReminderPhrases.Any(phrase => text.Contains(phrase));
     }
 
     private static string CleanReminderText(string message)

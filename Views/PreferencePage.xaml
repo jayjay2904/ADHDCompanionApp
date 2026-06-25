@@ -83,12 +83,20 @@
                         Style="{StaticResource StatusMessageStyle}" />
 
                     <Button
-                        Text="Save Preferences"
+                        Text="💾 Save Preferences"
                         Command="{Binding SaveCommand}"
                         Style="{StaticResource PrimaryButtonStyle}" />
+                    <Button
+                        Text="❓ How To Use Arlo"
+                        CornerRadius="22"
+                        HeightRequest="50"
+                        BackgroundColor="#F1E5FA"
+                        TextColor="#24384A"
+                        FontAttributes="Bold"
+                        Clicked="HowToUseArlo_Clicked" />   
 
                     <Button
-                        Text="About Arlo"
+                        Text="ℹ️ About Arlo"
                         Style="{StaticResource SecondaryButtonStyle}"
                         Command="{Binding ShowAboutArloCommand}" /> 
 

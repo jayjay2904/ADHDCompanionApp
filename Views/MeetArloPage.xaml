@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<ContentPage
+    x:Class="ADHDCompanionApp.Views.MeetArloPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="#FFFDF8"
+    Title="Meet Arlo">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="22" Spacing="18">
+
+            <Label
+                Text="Meet Arlo"
+                FontSize="32"
+                FontAttributes="Bold"
+                TextColor="#24384A" />
+
+            <Label
+                Text="A few quick tips before you begin."
+                FontSize="18"
+                TextColor="#555555" />
+
+            <!-- Type card -->
+            <Frame
+                CornerRadius="24"
+                Padding="18"
+                BackgroundColor="#FFFFFF"
+                BorderColor="#E8DFD2"
+                HasShadow="False">
+
+                <VerticalStackLayout Spacing="12">
+
+                    <Image
+                        Source="arlo_input_guide.png"
+                        Aspect="AspectFit"
+                        HeightRequest="110" />
+
+                    <Label
+                        Text="💬 Type here"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="#24384A" />
+
+                    <Label
+                        Text="Use the message box to tell Arlo anything. You don’t need perfect words."
+                        FontSize="16"
+                        TextColor="#555555" />
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Voice card -->
+            <Frame
+                CornerRadius="24"
+                Padding="18"
+                BackgroundColor="#FFFFFF"
+                BorderColor="#E8DFD2"
+                HasShadow="False">  
+
+                <Grid
+                    ColumnDefinitions="Auto,*"
+                    ColumnSpacing="18">
+
+                    <Image
+                        Grid.Column="0"
+                        Source="mic.png"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        VerticalOptions="Center" /> 
+
+                    <VerticalStackLayout
+                        Grid.Column="1"
+                        Spacing="6">    
+
+                        <Label
+                            Text="Talk instead"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            TextColor="#24384A"
+                            LineBreakMode="WordWrap" /> 
+
+                        <Label
+                            Text="Tap the microphone if speaking feels easier than typing."
+                            FontSize="16"
+                            TextColor="#555555"
+                            LineBreakMode="WordWrap" /> 
+
+                    </VerticalStackLayout>
+
+                </Grid>
+
+            </Frame>
+
+            <!-- Quick prompts card -->
+            <Frame
+                CornerRadius="24"
+                Padding="18"
+                BackgroundColor="#FFFFFF"
+                BorderColor="#E8DFD2"
+                HasShadow="False">  
+
+                <VerticalStackLayout Spacing="12">
+
+                    <Image
+                        Source="arlo_prompts_guide.png"
+                        Aspect="AspectFit"
+                        HeightRequest="150" />  
+
+                    <Label
+                        Text="Quick Prompts"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="#24384A" />  
+
+                    <Label
+                        Text="Quick Prompts are optional starter ideas when you're feeling stuck. You can use them, ignore them, or just start talking."
+                        FontSize="16"
+                        TextColor="#555555"
+                        LineBreakMode="WordWrap" /> 
+
+                </VerticalStackLayout>
+
+            </Frame>
+
+            <!-- Lightbulb card -->
+            <Frame
+                CornerRadius="24"
+                Padding="18"
+                BackgroundColor="#F1E5FA"
+                BorderColor="#D7BFEA"
+                HasShadow="False">  
+
+                <Grid
+                    ColumnDefinitions="Auto,*"
+                    ColumnSpacing="18"> 
+
+                    <Label
+                        Grid.Column="0"
+                        Text="💡"
+                        FontSize="42"
+                        TextColor="#7A4FA3"
+                        VerticalOptions="Center" /> 
+
+                    <VerticalStackLayout
+                        Grid.Column="1"
+                        Spacing="6">    
+
+                        <Label
+                            Text="Need ideas again?"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            TextColor="#24384A"
+                            LineBreakMode="WordWrap" /> 
+
+                        <Label
+                            Text="Tap the lightbulb at any time to bring the Quick Prompts back."
+                            FontSize="16"
+                            TextColor="#555555"
+                            LineBreakMode="WordWrap" /> 
+
+                    </VerticalStackLayout>
+
+                </Grid>
+
+            </Frame>
+
+            <!-- Reassurance -->
+            <Frame
+                CornerRadius="24"
+                Padding="18"
+                BackgroundColor="#E8F3DD"
+                BorderColor="#CFE4BD"
+                HasShadow="False">  
+
+                <Label
+                    Text="There’s no right way to use Arlo. Start messy. Arlo can handle messy."
+                    FontSize="18"
+                    FontAttributes="Bold"
+                    TextColor="#24384A"
+                    HorizontalTextAlignment="Center" /> 
+
+            </Frame>
+
+            <Label
+                Text="Need a refresher? Tap the ⚙️ icon anytime to come back to this guide."
+                FontSize="13"
+                TextColor="#777777"
+                HorizontalTextAlignment="Center"
+                LineBreakMode="WordWrap"
+                Margin="10,0,10,0" />   
+
+            <Button
+                x:Name="ActionButton"
+                Text="Got It"
+                Clicked="ActionButton_Clicked"
+                CornerRadius="24"
+                HeightRequest="54"
+                FontSize="18"
+                FontAttributes="Bold"
+                BackgroundColor="#B7D7A8"
+                TextColor="#24384A" />  
+            
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
