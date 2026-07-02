@@ -1,3 +1,4 @@
+using ADHDCompanionApp.Models;
 using ADHDCompanionApp.Models.Entities;
 using ADHDCompanionApp.Services.Interfaces;
 using System.Diagnostics;
@@ -14,6 +15,7 @@ public class ArloService : IArloService
     private readonly List<ChatMessage> _messages = new();
     private readonly Dictionary<string, int> _lastResponseIndex = new();
     private readonly Queue<string> _recentModes = new();
+    private readonly List<ConversationMemoryItem> _conversationMemory = new();
 
     private DateTime? _lastAutoCheckInUtc;
     private DateTime? _lastAutoWinUtc;
@@ -21,7 +23,7 @@ public class ArloService : IArloService
     private bool _isSavingAutoCheckIn;
     private string? _lastAutoCheckInMessage;
     private DateTime? _lastAutoCheckInAttemptUtc;
-
+    
     private static readonly string[] WinPhrases =
     {
         "i did",
@@ -113,6 +115,7 @@ public class ArloService : IArloService
     "i must collect",
     "i must pick up"
 };
+
     private static string NormaliseIntentText(string message)
     {
         return message
@@ -120,6 +123,21 @@ public class ArloService : IArloService
             .Replace("'", "")
             .Replace("’", "")
             .Trim();
+    }
+    private static string MakeMemoryNatural(string text)
+    {
+        var result = text;
+
+        result = result.Replace(" my ", " your ", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" me ", " you ", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" myself", " yourself", StringComparison.OrdinalIgnoreCase);
+
+        result = result.Replace(" my.", " your.", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" my,", " your,", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" my?", " your?", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" my!", " your!", StringComparison.OrdinalIgnoreCase);
+
+        return result;
     }
 
     private readonly Dictionary<string, List<ArloResponse>> _responses = new()
@@ -246,7 +264,12 @@ public class ArloService : IArloService
         await TrySaveAutoCheckInAsync(userMessage);
         await TrySaveAutoWinAsync(userMessage);
 
-       
+        TrySaveConversationMemory(userMessage);
+
+        if (LooksLikeRecallQuestion(userMessage))
+        {
+            return GetConversationRecallReply();
+        }
 
         switch (responsePath)
         {
@@ -258,6 +281,7 @@ public class ArloService : IArloService
                 return GetReminderResponse();
         }
 
+        
         var reminderIntentDetected = LooksLikeReminderIntent(userMessage);
 
         var aiRequest = new ArloAiRequest
@@ -317,6 +341,29 @@ public class ArloService : IArloService
         }
 
         return GetDefaultReply(emotionalContext, unfinishedTasks);
+    }
+
+    private string GetConversationRecallReply()
+    {
+        if (_conversationMemory.Count == 0)
+        {
+            return "I don’t think you mentioned a specific task yet. Tell me what’s floating around and I’ll help you catch it.";
+        }
+
+        var recentItems = _conversationMemory
+            .OrderByDescending(m => m.CreatedUtc)
+            .Take(5)
+            .Reverse()
+            .ToList();
+
+        if (recentItems.Count == 1)
+        {
+            return $"Earlier you mentioned: {recentItems[0].Text}.";
+        }
+
+        var lines = recentItems.Select((item, index) => $"{index + 1}. {MakeMemoryNatural(item.Text)}");
+
+        return "Earlier you mentioned:\n\n" + string.Join("\n", lines);
     }
 
     private async Task TrySaveAutoWinAsync(string userMessage)
@@ -641,8 +688,48 @@ public class ArloService : IArloService
             .Replace("I need to", "", StringComparison.OrdinalIgnoreCase)
             .Replace("I have to", "", StringComparison.OrdinalIgnoreCase)
             .Replace("I should", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("remind me to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("remember to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I must", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Remind me to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Remember to", "", StringComparison.OrdinalIgnoreCase)
+            .Trim();
+
+        if (string.IsNullOrWhiteSpace(cleaned))
+            return message.Trim();
+
+        return char.ToUpper(cleaned[0]) + cleaned[1..];
+    }
+
+    private static string CleanMemoryText(string message)
+    {
+        var cleaned = message.Trim();
+
+        cleaned = cleaned
+            .Replace("I also need to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I need to also", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I still need to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I also have to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I have to also", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I still have to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I must also", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I've got to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Ive got to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I've still got to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Ive still got to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I need to remember to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I have to remember to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Can you remind me to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Please remind me to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Don't let me forget to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Dont let me forget to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Remind me to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Remember to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I need to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I have to", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I should", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("I must", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Hey Arlo", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Arlo", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("Hello", "", StringComparison.OrdinalIgnoreCase)
             .Trim();
 
         if (string.IsNullOrWhiteSpace(cleaned))
@@ -754,5 +841,88 @@ public class ArloService : IArloService
 
         Who could you reach out to first?
         """;
+    }
+
+    private static bool LooksWorthRemembering(string message)
+    {
+        var text = NormaliseIntentText(message);
+
+        return text.Contains("i need to")
+            || text.Contains("i also need to")
+            || text.Contains("i need to also")
+            || text.Contains("i still need to")
+
+            || text.Contains("i have to")
+            || text.Contains("i also have to")
+            || text.Contains("i have to also")
+            || text.Contains("i still have to")
+
+            || text.Contains("i must")
+            || text.Contains("i must also")
+
+            || text.Contains("ive got to")
+            || text.Contains("ive still got to")
+            || text.Contains("i still have got to")
+
+            || text.Contains("dont forget")
+            || text.Contains("remind me to")
+            || text.Contains("i have an appointment")
+            || text.Contains("ive got an appointment");
+    }
+
+    private void TrySaveConversationMemory(string userMessage)
+    {
+        if (!LooksWorthRemembering(userMessage))
+            return;
+
+        var cleaned = CleanMemoryText(userMessage);
+
+        if (string.IsNullOrWhiteSpace(cleaned))
+            return;
+
+        var alreadyExists = _conversationMemory.Any(m =>
+            string.Equals(
+                m.Text.Trim(),
+                cleaned.Trim(),
+                StringComparison.OrdinalIgnoreCase));
+
+        if (alreadyExists)
+            return;
+
+        _conversationMemory.Add(new ConversationMemoryItem
+        {
+            Text = cleaned,
+            Category = "task",
+            CreatedUtc = DateTime.UtcNow
+        });
+
+        while (_conversationMemory.Count > 10)
+        {
+            _conversationMemory.RemoveAt(0);
+        }
+    }
+    private static bool LooksLikeRecallQuestion(string message)
+    {
+        var text = NormaliseIntentText(message);
+
+        return text.Contains("what was i supposed to do")
+            || text.Contains("what did i need to do")
+            || text.Contains("what was the task")
+            || text.Contains("what did i say i needed to do")
+            || text.Contains("what was i meant to do")
+            || text.Contains("what did i mention")
+            || text.Contains("what did i say")
+            || text.Contains("what was i meant to remember")
+            || text.Contains("what have i got on")
+            || text.Contains("what have i got today")
+            || text.Contains("what have i got on today")
+            || text.Contains("what have i got tomorrow")
+            || text.Contains("what have i got on tomorrow")
+            || text.Contains("what do i have on")
+            || text.Contains("what do i have on today")
+            || text.Contains("what do i have on tomorrow")
+            || text.Contains("remind me what i have on")
+            || text.Contains("remind me what ive got on")
+            || text.Contains("remind me what i got on");
     }
 }
