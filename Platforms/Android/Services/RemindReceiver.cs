@@ -14,6 +14,7 @@ public class ReminderReceiver : BroadcastReceiver
     {
         try
         {
+            
             Log.Debug(LogTag, "ReminderReceiver fired.");
 
             if (context is null || intent is null)
@@ -30,7 +31,9 @@ public class ReminderReceiver : BroadcastReceiver
                 return;
             }
 
+            Log.Debug(LogTag, $"Built request: Key={request.ReminderKey}, Id={request.NotificationId}, Title={request.Title}, Message={request.Message}");
             AndroidReminderScheduler.ShowNotification(context, request);
+            Log.Debug(LogTag, "ShowNotification called.");
 
             var services = IPlatformApplication.Current?.Services;
             var reminderEngine = services?.GetService(typeof(IReminderEngine)) as IReminderEngine;

@@ -8,9 +8,18 @@ public class ReminderEngine : IReminderEngine
 {
     private const string LogTag = "AppReminder";
 
+    private static readonly int[] ReEngagementDays =
+    {
+        3,
+        7,
+        14,
+        30,
+        90,
+        180
+    };
+
     private readonly IPlatformReminderScheduler _platformReminderScheduler;
     private readonly IUserProfileService _userProfileService;
-
 
     public ReminderEngine(
         IPlatformReminderScheduler platformReminderScheduler,
@@ -77,13 +86,15 @@ public class ReminderEngine : IReminderEngine
                 !profile.MedicationReminderTime.HasValue ||
                 !profile.MedicationStartDate.HasValue)
             {
-                
                 await CancelMedicationReminderAsync();
                 return;
             }
 
             var reminderTime = profile.MedicationReminderTime.Value;
-            var nextTrigger = GetNextTriggerTime(DateTime.Now, profile.MedicationStartDate.Value, reminderTime);
+            var nextTrigger = GetNextTriggerTime(
+                DateTime.Now,
+                profile.MedicationStartDate.Value,
+                reminderTime);
 
             var request = new ReminderRequest
             {
@@ -129,9 +140,7 @@ public class ReminderEngine : IReminderEngine
             var profile = await _userProfileService.GetProfileAsync();
 
             if (profile is null)
-            {
-                 return;
-            }
+                return;
 
             if (profile.UsesMedicationSupport &&
                 profile.MedicationReminderTime.HasValue &&
@@ -141,7 +150,7 @@ public class ReminderEngine : IReminderEngine
             }
             else
             {
-               await CancelMedicationReminderAsync();
+                await CancelMedicationReminderAsync();
             }
         }
         catch (Exception ex)
@@ -155,12 +164,11 @@ public class ReminderEngine : IReminderEngine
         try
         {
             if (!request.RepeatTimeOfDay.HasValue)
-            {
-                
                 return;
-            }
 
-            var nextTrigger = DateTime.Today.AddDays(1).Add(request.RepeatTimeOfDay.Value);
+            var nextTrigger = DateTime.Today
+                .AddDays(1)
+                .Add(request.RepeatTimeOfDay.Value);
 
             var nextRequest = new ReminderRequest
             {
@@ -175,8 +183,6 @@ public class ReminderEngine : IReminderEngine
                 Metadata = new Dictionary<string, string>(request.Metadata)
             };
 
-            
-
             await ScheduleReminderAsync(nextRequest);
         }
         catch (Exception ex)
@@ -185,25 +191,6 @@ public class ReminderEngine : IReminderEngine
         }
     }
 
-    private static DateTime GetNextTriggerTime(DateTime now, DateTime startDate, TimeSpan reminderTime)
-    {
-        var todayAtReminderTime = now.Date.Add(reminderTime);
-        var startDateAtReminderTime = startDate.Date.Add(reminderTime);
-
-        var nextTrigger = todayAtReminderTime;
-
-        if (nextTrigger <= now)
-        {
-            nextTrigger = nextTrigger.AddDays(1);
-        }
-
-        if (startDateAtReminderTime > nextTrigger)
-        {
-            nextTrigger = startDateAtReminderTime;
-        }
-
-        return nextTrigger;
-    }
     public async Task ScheduleTaskReminderAsync(TaskItem task)
     {
         try
@@ -214,7 +201,9 @@ public class ReminderEngine : IReminderEngine
             if (string.IsNullOrWhiteSpace(task.Id))
                 return;
 
-            if (task.IsCompleted || !task.ReminderEnabled || !task.ReminderDateTime.HasValue)
+            if (task.IsCompleted ||
+                !task.ReminderEnabled ||
+                !task.ReminderDateTime.HasValue)
             {
                 await CancelTaskReminderAsync(task);
                 return;
@@ -248,6 +237,7 @@ public class ReminderEngine : IReminderEngine
             System.Diagnostics.Debug.WriteLine($"[ReminderEngine ERROR] ScheduleTaskReminderAsync: {ex}");
         }
     }
+
     public async Task CancelTaskReminderAsync(TaskItem task)
     {
         try
@@ -263,5 +253,108 @@ public class ReminderEngine : IReminderEngine
         {
             System.Diagnostics.Debug.WriteLine($"[ReminderEngine ERROR] CancelTaskReminderAsync: {ex}");
         }
+    }
+
+    public async Task ScheduleReEngagementRemindersAsync(string? userName = null)
+    {
+        try
+        {
+            await CancelReEngagementRemindersAsync();
+
+            var now = DateTime.Now;
+
+            foreach (var days in ReEngagementDays)
+            {
+                var request = new ReminderRequest
+                {
+                    ReminderKey = ReminderConstants.GetReEngagementReminderKey(days),
+                    NotificationId = ReminderConstants.ReEngagementNotificationIdBase + days,
+                    Type = ReminderType.Custom,
+                    Title = "Still here when you need me",
+                    Message = GetReEngagementMessage(days, userName),
+                    TriggerTime = now.AddDays(days),
+                    RepeatTimeOfDay = null,
+                    UserName = userName
+                };
+
+                await ScheduleReminderAsync(request);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ScheduleReEngagementRemindersAsync failed: {ex}");
+        }
+    }
+
+    public async Task CancelReEngagementRemindersAsync()
+    {
+        try
+        {
+            foreach (var days in ReEngagementDays)
+            {
+                await CancelReminderAsync(
+                    ReminderConstants.GetReEngagementReminderKey(days),
+                    ReminderConstants.ReEngagementNotificationIdBase + days);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"CancelReEngagementRemindersAsync failed: {ex}");
+        }
+    }
+
+    private static string GetReEngagementMessage(int days, string? userName)
+    {
+        var namePrefix = string.IsNullOrWhiteSpace(userName)
+            ? string.Empty
+            : $"{userName}, ";
+
+        return days switch
+        {
+            3 => $"{namePrefix}still here when you need me.",
+            7 => $"{namePrefix}Want to take one small step today?",
+            14 => $"{namePrefix}Arlo is here if your brain feels full.",
+            30 => $"{namePrefix}just checking in. No catching up needed.",
+            90 => $"{namePrefix}still here. You can start messy whenever you’re ready.",
+            180 => $"{namePrefix}it’s been a while, but you don’t have to start from scratch.",
+            _ => $"{namePrefix}still here when you need me."
+        };
+    }
+
+    private static DateTime GetNextTriggerTime(
+        DateTime now,
+        DateTime startDate,
+        TimeSpan reminderTime)
+    {
+        var todayAtReminderTime = now.Date.Add(reminderTime);
+        var startDateAtReminderTime = startDate.Date.Add(reminderTime);
+
+        var nextTrigger = todayAtReminderTime;
+
+        if (nextTrigger <= now)
+            nextTrigger = nextTrigger.AddDays(1);
+
+        if (startDateAtReminderTime > nextTrigger)
+            nextTrigger = startDateAtReminderTime;
+
+        return nextTrigger;
+    }
+    public async Task ScheduleDebugNotificationAsync(string title, string message, TimeSpan delay)
+    {
+        var notificationId = 9001;
+
+        var request = new ReminderRequest
+        {
+            ReminderKey = "debug_test_notification",
+            NotificationId = notificationId,
+            Title = title,
+            Message = message,
+            TriggerTime = DateTime.Now.Add(delay)
+        };
+
+        await ScheduleReminderAsync(request);
+
+        System.Diagnostics.Debug.WriteLine(
+            $"[Arlo Notifications] Debug notification scheduled. ID={notificationId}, Time={request.TriggerTime}");
     }
 }

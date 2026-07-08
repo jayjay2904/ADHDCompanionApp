@@ -3,6 +3,7 @@ using Android.Content;
 using Android.Util;
 using ADHDCompanionApp.Services.Interfaces;
 
+
 namespace ADHDCompanionApp.Platforms.Android.Services;
 
 [BroadcastReceiver(Enabled = true, Exported = false)]
@@ -19,6 +20,7 @@ public class BootReceiver : BroadcastReceiver
     {
         try
         {
+            
             Log.Debug(LogTag, $"BootReceiver fired. Action={intent?.Action}");
 
             if (context is null || intent is null)

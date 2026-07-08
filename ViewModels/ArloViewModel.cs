@@ -18,13 +18,14 @@ namespace ADHDCompanionApp.ViewModels;
 public partial class ArloViewModel : BaseViewModel
 {
     private readonly IArloService _arloService;
-
+    private readonly IUserActivityService _userActivityService;
     private readonly ISpeechToTextService _speechToTextService;
     private readonly IServiceProvider _serviceProvider;
     private readonly IReminderEngine _reminderEngine;
     private ConversationMode _currentConversationMode = ConversationMode.None;
     private string? _pendingActionText;
     private bool _isProcessingMessage;
+    private readonly IConversationIntentService _intentService;
 
     public event Action? ArloFinishedResponding;
 
@@ -38,7 +39,10 @@ public partial class ArloViewModel : BaseViewModel
     private bool arePromptPickerVisible;
 
     [ObservableProperty]
-    private string greetingText = "Hi.";
+    private string greetingTitle = "Hi.";
+
+    [ObservableProperty]
+    private string greetingSubtitle = "I'm here with you.";
 
     [ObservableProperty]
     private bool isReminderSuggestionVisible;
@@ -57,15 +61,13 @@ public partial class ArloViewModel : BaseViewModel
 
     public ICommand ShowProgressCommand { get; }
 
-    private bool _isOpeningProgress;
-
     public ObservableCollection<ChatMessage> Messages { get; } = new();
 
     public ObservableCollection<ArloPrompt> QuickPrompts { get; } = new()
 {
     new() { Text = "I’m overwhelmed", Icon = "cloud.png" },
     new() { Text = "I can’t start", Icon = "play.png" },
-    new() { Text = "I’ve low energy", Icon = "battery.png" },
+    new() { Text = "I'm low on energy", Icon = "battery.png" },
     new() { Text = "I’m anxious", Icon = "anxious.png" },
     new() { Text = "I feel stuck", Icon = "pause.png" },
     new() { Text = "I’m overstimulated", Icon = "list.png" }
@@ -78,7 +80,9 @@ public partial class ArloViewModel : BaseViewModel
         IUserProfileService profileService,
         ISpeechToTextService speechToTextService,
         IServiceProvider serviceProvider,
-        IReminderEngine reminderEngine)
+        IReminderEngine reminderEngine,
+        IUserActivityService userActivityService,
+        IConversationIntentService intentService)
     {
         _arloService = arloService;
         _profileService = profileService;
@@ -86,6 +90,8 @@ public partial class ArloViewModel : BaseViewModel
         _serviceProvider = serviceProvider;
         ShowProgressCommand = new Command(ShowProgress);
         _reminderEngine = reminderEngine;
+        _userActivityService = userActivityService;
+        _intentService = intentService;
 
         Title = "Arlo";
 
@@ -115,60 +121,43 @@ public partial class ArloViewModel : BaseViewModel
 
             Preferences.Set("LastOpenedUtc", now.ToString("O"));
 
-            GreetingText = BuildGreeting(name, now, lastOpened);
+            var greeting = BuildGreeting(name, now, lastOpened);
+            greetingTitle = greeting.Title;
+            greetingSubtitle = greeting.Subtitle;
         }
         catch
         {
-            GreetingText = "Hi.";
+            greetingTitle = "Hi.";
+            greetingSubtitle = "I'm here with you.";
         }
     }
 
-    private static string BuildGreeting(string name, DateTime nowUtc, DateTime? lastOpenedUtc)
+    private static (string Title, string Subtitle) BuildGreeting(string name, DateTime nowUtc, DateTime? lastOpenedUtc)
     {
         var localHour = DateTime.Now.Hour;
-
         var firstName = name.Split(' ')[0];
 
-        // First ever launch
         if (lastOpenedUtc is null)
-        {
-            return $"Hi {firstName}.";
-        }
+            return ($"Hi {firstName}.", "I'm Arlo. Start wherever feels easiest.");
 
         var gap = nowUtc - lastOpenedUtc.Value;
 
-        // Recently returned
         if (gap.TotalHours < 3)
-        {
-            return $"Hey {firstName}. Still here with you.";
-        }
+            return ($"Hey {firstName}.", "Still here with you.");
 
-        // Same day return
         if (gap.TotalHours < 24)
-        {
-            return $"Hey {firstName}. Glad you’re back.";
-        }
+            return ($"Hey {firstName}.", "Glad you’re back.");
 
-        // Few days away
         if (gap.TotalDays >= 2)
-        {
-            return $"Hey {firstName}. No pressure. Let’s just start where you are.";
-        }
+            return ($"Hey {firstName}.", "I'm here whenever you're ready.");
 
-        // Morning
         if (localHour < 12)
-        {
-            return $"Morning {firstName}. How’s your brain feeling today?";
-        }
+            return ($"Morning {firstName}.", "Start wherever feels easiest.");
 
-        // Evening
         if (localHour >= 18)
-        {
-            return $"Hey {firstName}. You don’t need to have everything figured out tonight.";
-        }
+            return ($"Hey {firstName}.", "We can take this one step at a time.");
 
-        // Default
-        return $"Hi {firstName}.";
+        return ($"Hi {firstName}.", "I'm here with you.");
     }
 
     public async Task LoadMessagesAsync()
@@ -217,6 +206,7 @@ public partial class ArloViewModel : BaseViewModel
     [RelayCommand]
     private async Task SendMessage()
     {
+        _ = _userActivityService.RecordInteractionAsync();
         if (string.IsNullOrWhiteSpace(UserInput))
             return;
 
@@ -233,11 +223,13 @@ public partial class ArloViewModel : BaseViewModel
         UserInput = string.Empty;
 
         await ProcessMessageAsync(currentInput);
+     
     }
 
     [RelayCommand]
     private async Task SendQuickPrompt(string prompt)
     {
+        _ = _userActivityService.RecordInteractionAsync();
         if (string.IsNullOrWhiteSpace(prompt))
             return;
 
@@ -255,6 +247,8 @@ public partial class ArloViewModel : BaseViewModel
 
             if (string.IsNullOrWhiteSpace(spokenText))
                 return;
+
+            _ = _userActivityService.RecordInteractionAsync();
 
             UserInput = spokenText.Trim();
 
@@ -462,9 +456,12 @@ public partial class ArloViewModel : BaseViewModel
                 }
             });
 
-            if (LooksLikeReminderIntent(trimmedInput))
+            // Only offer a reminder if the user is creating a new reminder.
+            // If they're asking Arlo to recall something, don't show the reminder suggestion.
+            if (_intentService.LooksLikeReminderIntent(trimmedInput) &&
+                !_intentService.LooksLikeRecallQuestion(trimmedInput))
             {
-                PendingReminderText = CleanReminderText(trimmedInput);
+                PendingReminderText = _intentService.CleanReminderText(trimmedInput);
                 _pendingActionText = PendingReminderText;
 
                 IsReminderSuggestionVisible = true;
@@ -545,36 +542,11 @@ public partial class ArloViewModel : BaseViewModel
             }
         }
     }
-    private async void ShowProgress()
+    private void ShowProgress()
     {
         var popup = _serviceProvider.GetRequiredService<ProgressSummaryPopup>();
 
         Shell.Current.CurrentPage.ShowPopup(popup);
     }
-    private static string CleanReminderText(string input)
-    {
-        var cleaned = input
-            .Replace("I need to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I have to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I should", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("remember to", "", StringComparison.OrdinalIgnoreCase)
-            .Trim();
-
-        return string.IsNullOrWhiteSpace(cleaned)
-            ? input.Trim()
-            : cleaned;
-    }
-
-    private bool LooksLikeReminderIntent(string input)
-    {
-        return input.Contains("need to", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("have to", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("should", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("remember to", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("appointment", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("meeting", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("don't let me forget", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("dont let me forget", StringComparison.OrdinalIgnoreCase) ||
-               input.Contains("remind me", StringComparison.OrdinalIgnoreCase);
-    }
+    
 }

@@ -16,6 +16,8 @@ public interface IReminderEngine
     Task ScheduleTaskReminderAsync(TaskItem task);
     Task CancelTaskReminderAsync(TaskItem task);
     Task RestoreRemindersAsync();
-
     Task HandleTriggeredReminderAsync(ReminderRequest request);
+    Task ScheduleReEngagementRemindersAsync(string? userName = null);
+    Task CancelReEngagementRemindersAsync();
+    Task ScheduleDebugNotificationAsync(string title, string message, TimeSpan delay);
 }

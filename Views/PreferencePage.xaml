@@ -98,11 +98,18 @@
                     <Button
                         Text="ℹ️ About Arlo"
                         Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding ShowAboutArloCommand}" /> 
+                        Command="{Binding ShowAboutArloCommand}" />
+
+                    <Button
+                        Text="Schedule Test Notification"
+                        Clicked="OnScheduleTestNotificationClicked" />  
 
                 </VerticalStackLayout>
             </Frame>
 
+            
+
         </VerticalStackLayout>
     </ScrollView>
+    
 </ContentPage>

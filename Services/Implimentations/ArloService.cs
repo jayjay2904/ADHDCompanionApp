@@ -11,134 +11,28 @@ public class ArloService : IArloService
     private readonly ITaskService _taskService;
     private readonly IArloAiClient _arloAiClient;
     private readonly IWinService _winService;
+    private readonly IConversationIntentService _intentService;
 
     private readonly List<ChatMessage> _messages = new();
     private readonly Dictionary<string, int> _lastResponseIndex = new();
     private readonly Queue<string> _recentModes = new();
     private readonly List<ConversationMemoryItem> _conversationMemory = new();
 
-    private DateTime? _lastAutoCheckInUtc;
     private DateTime? _lastAutoWinUtc;
     private string? _pendingReminderText;
     private bool _isSavingAutoCheckIn;
     private string? _lastAutoCheckInMessage;
     private DateTime? _lastAutoCheckInAttemptUtc;
-    
+
     private static readonly string[] WinPhrases =
     {
-        "i did",
-        "i have done",
-        "ive done",
-        "i managed",
-        "i finally",
-        "i completed",
-        "i finished",
-        "i sent",
-        "i have sent",
-        "ive sent",
-        "i sorted",
-        "i fixed",
-        "i cleaned",
-        "i booked",
-        "i made it",
-        "i showed up",
-        "i went",
-        "i started",
-        "i got through",
-        "i survived",
-        "i got out of bed",
-        "i got dressed",
-        "i showered",
-        "i made a call",
-        "i replied",
-        "i turned up"
+        "i did", "i have done", "ive done", "i managed", "i finally",
+        "i completed", "i finished", "i sent", "i have sent", "ive sent",
+        "i sorted", "i fixed", "i cleaned", "i booked", "i made it",
+        "i showed up", "i went", "i started", "i got through", "i survived",
+        "i got out of bed", "i got dressed", "i showered", "i made a call",
+        "i replied", "i turned up"
     };
-
-    private static readonly string[] ExplicitReminderPhrases =
-{
-    "remind me to",
-    "can you remind me",
-    "please remind me",
-    "dont let me forget",
-    "don't let me forget",
-    "remember to",
-    "i need to remember to",
-    "i have to remember to"
-};
-
-    private static readonly string[] AppointmentReminderPhrases =
-    {
-    "book an appointment",
-    "make an appointment",
-    "arrange an appointment",
-    "schedule an appointment",
-    "need to book an appointment",
-    "need to make an appointment",
-    "need to arrange an appointment",
-
-    "i have an appointment",
-    "ive got an appointment",
-    "i've got an appointment",
-    "got an appointment",
-    "appointment with",
-    "appointment at",
-    "appointment on",
-
-    "call the doctor",
-    "phone the doctor",
-    "ring the doctor",
-    "call the dentist",
-    "phone the dentist",
-    "ring the dentist"
-};
-
-    private static readonly string[] TaskReminderPhrases =
-    {
-    "i need to pay",
-    "i need to call",
-    "i need to phone",
-    "i need to ring",
-    "i need to collect",
-    "i need to pick up",
-
-    "i have to pay",
-    "i have to call",
-    "i have to phone",
-    "i have to ring",
-    "i have to collect",
-    "i have to pick up",
-
-    "i must pay",
-    "i must call",
-    "i must phone",
-    "i must ring",
-    "i must collect",
-    "i must pick up"
-};
-
-    private static string NormaliseIntentText(string message)
-    {
-        return message
-            .ToLowerInvariant()
-            .Replace("'", "")
-            .Replace("’", "")
-            .Trim();
-    }
-    private static string MakeMemoryNatural(string text)
-    {
-        var result = text;
-
-        result = result.Replace(" my ", " your ", StringComparison.OrdinalIgnoreCase);
-        result = result.Replace(" me ", " you ", StringComparison.OrdinalIgnoreCase);
-        result = result.Replace(" myself", " yourself", StringComparison.OrdinalIgnoreCase);
-
-        result = result.Replace(" my.", " your.", StringComparison.OrdinalIgnoreCase);
-        result = result.Replace(" my,", " your,", StringComparison.OrdinalIgnoreCase);
-        result = result.Replace(" my?", " your?", StringComparison.OrdinalIgnoreCase);
-        result = result.Replace(" my!", " your!", StringComparison.OrdinalIgnoreCase);
-
-        return result;
-    }
 
     private readonly Dictionary<string, List<ArloResponse>> _responses = new()
     {
@@ -148,63 +42,54 @@ public class ArloService : IArloService
             new ArloResponse { Validation = "That sounds like overload, not failure.", Action = "Take 30 seconds and just look at what’s in front of you.", NextStep = "You don’t need to solve the whole day. Just the next small bit." },
             new ArloResponse { Validation = "No wonder your brain feels full. Too many open loops can feel brutal.", Action = "Write down one thing that’s shouting loudest in your head.", NextStep = "Then we can make that one thing smaller." }
         },
-
         ["cant_start"] = new()
         {
             new ArloResponse { Validation = "That stuck-at-the-start feeling is horrible.", Action = "Open what you need and just sit with it for 30 seconds.", NextStep = "If that feels okay, do the tiniest version of it." },
             new ArloResponse { Validation = "Starting can feel bigger than the task itself.", Action = "Don’t start the task. Just prepare the first thing you need.", NextStep = "That counts as movement." },
             new ArloResponse { Validation = "Your brain isn’t being lazy. It’s struggling to find the entry point.", Action = "Make the first step ridiculously small.", NextStep = "small counts. small is how we get moving." }
         },
-
         ["low_energy"] = new()
         {
             new ArloResponse { Validation = "Low energy days hit differently.", Action = "Pick something so small it feels almost silly.", NextStep = "Today isn’t about pushing. It’s about easing in." },
             new ArloResponse { Validation = "Your battery sounds low, so we lower the expectation.", Action = "Choose one gentle thing: drink water, stand up, or clear one small space.", NextStep = "That is enough for now." },
             new ArloResponse { Validation = "This doesn’t sound like a power-through moment.", Action = "Do one thing that helps Future You by 1%.", NextStep = "Small support still counts." }
         },
-
         ["anxious"] = new()
         {
             new ArloResponse { Validation = "Anxiety can make everything feel urgent.", Action = "Take one slow breath and drop your shoulders.", NextStep = "Nothing needs solving right this second." },
             new ArloResponse { Validation = "That anxious buzz can make your brain race ahead.", Action = "Look around and name three things you can see.", NextStep = "Bring yourself back to the room first." },
             new ArloResponse { Validation = "That sounds uncomfortable and noisy inside your head.", Action = "Put both feet on the floor and take one slower breath than usual.", NextStep = "We can deal with the next thing after that." }
         },
-
         ["avoiding"] = new()
         {
             new ArloResponse { Validation = "Avoiding something usually means it feels bigger than it looks.", Action = "Name the thing you’re avoiding without judging yourself for it.", NextStep = "Naming it is the first bit of control." },
             new ArloResponse { Validation = "Avoidance makes sense when your brain expects discomfort.", Action = "Just move one step closer to the thing. Don’t do it yet.", NextStep = "Closer is progress." },
             new ArloResponse { Validation = "You’re not broken for avoiding it.", Action = "Ask: what is the smallest safe part of this?", NextStep = "Start there, not with the whole thing." }
         },
-
         ["too_much"] = new()
         {
             new ArloResponse { Validation = "Too many things at once can make everything feel impossible.", Action = "Pick one thing to ignore on purpose for now.", NextStep = "Then choose one thing to look at." },
             new ArloResponse { Validation = "That sounds like too many tabs open in your brain.", Action = "Choose one task as the only task for the next five minutes.", NextStep = "The rest can wait." },
             new ArloResponse { Validation = "When everything feels important, nothing feels possible.", Action = "Pick the easiest thing, not the biggest thing.", NextStep = "Momentum matters more than perfect priority right now." }
         },
-
         ["stuck"] = new()
         {
             new ArloResponse { Validation = "Feeling stuck is frustrating, especially when you know you want to move.", Action = "Change your position: stand up, sit somewhere else, or move to another room.", NextStep = "Sometimes the body has to move before the brain does." },
             new ArloResponse { Validation = "That stuck feeling can feel like a wall.", Action = "Ask yourself: what is the next visible action?", NextStep = "Not the whole plan. Just the next visible action." },
             new ArloResponse { Validation = "You’re not doing nothing. Your brain is jammed.", Action = "Do a reset action: water, stretch, breathe, or open the thing.", NextStep = "Then see what feels possible." }
         },
-
         ["failed"] = new()
         {
             new ArloResponse { Validation = "That ‘I’ve failed’ feeling hits hard.", Action = "Write down one thing you did do today. Anything counts.", NextStep = "Your brain may be skipping the evidence." },
             new ArloResponse { Validation = "Feeling like you’ve messed up doesn’t mean you are a mess.", Action = "Pause and say: this is a hard moment, not my whole identity.", NextStep = "Then choose one kind next move." },
             new ArloResponse { Validation = "That shame spiral can be loud.", Action = "Find one small repair step. Message someone, tidy one thing, drink water, or reset.", NextStep = "Repair beats punishment." }
         },
-
         ["overstimulated"] = new()
         {
             new ArloResponse { Validation = "That sounds like too much input all at once.", Action = "Reduce one thing: light, sound, movement, or people.", NextStep = "You don’t need to explain it. Just lower the noise first." },
             new ArloResponse { Validation = "Your system sounds overloaded, not broken.", Action = "Step away from one source of stimulation for two minutes.", NextStep = "Quiet first. Decisions later." },
             new ArloResponse { Validation = "When everything feels loud, even small things can feel massive.", Action = "Find one calmer spot, even if it’s just the bathroom or the car.", NextStep = "Let your nervous system come down before doing anything else." }
         },
-
         ["okay"] = new()
         {
             new ArloResponse { Validation = "Nice. We don’t need to force anything big.", Action = "Pick one small thing that would make today slightly easier.", NextStep = "Small steady steps count." },
@@ -214,21 +99,20 @@ public class ArloService : IArloService
     };
 
     public ArloService(
-       ICheckInService checkInService,
-       ITaskService taskService,
-       IArloAiClient arloAiClient,
-       IWinService winService)
+        ICheckInService checkInService,
+        ITaskService taskService,
+        IArloAiClient arloAiClient,
+        IWinService winService,
+        IConversationIntentService intentService)
     {
         _checkInService = checkInService;
         _taskService = taskService;
         _arloAiClient = arloAiClient;
         _winService = winService;
+        _intentService = intentService;
     }
 
-    public Task<List<ChatMessage>> GetMessagesAsync()
-    {
-        return Task.FromResult(_messages.ToList());
-    }
+    public Task<List<ChatMessage>> GetMessagesAsync() => Task.FromResult(_messages.ToList());
 
     public Task AddMessageAsync(ChatMessage message)
     {
@@ -239,13 +123,18 @@ public class ArloService : IArloService
     public Task ClearMessagesAsync()
     {
         _messages.Clear();
+        _conversationMemory.Clear();
         return Task.CompletedTask;
+    }
+        private bool ShouldIgnoreRecentChatFor(string userMessage)
+    {
+        return _intentService.LooksLikeRecallQuestion(userMessage)
+            || _intentService.LooksLikeReminderIntent(userMessage);
     }
 
     public async Task<string> GetReplyAsync(string userMessage)
     {
         var responsePath = DetermineResponsePath(userMessage);
-
         var message = userMessage.Trim().ToLowerInvariant();
 
         var latestCheckIn = await _checkInService.GetLatestCheckInAsync();
@@ -257,19 +146,17 @@ public class ArloService : IArloService
             .ToList();
 
         var emotionalContext = BuildEmotionalContext(latestCheckIn);
-
         var state = DetectState(message);
+
         TrackRecentMode(state);
 
         await TrySaveAutoCheckInAsync(userMessage);
         await TrySaveAutoWinAsync(userMessage);
 
-        TrySaveConversationMemory(userMessage);
-
-        if (LooksLikeRecallQuestion(userMessage))
-        {
+        if (_intentService.LooksLikeRecallQuestion(userMessage))
             return GetConversationRecallReply();
-        }
+
+        TrySaveConversationMemory(userMessage);
 
         switch (responsePath)
         {
@@ -277,44 +164,34 @@ public class ArloService : IArloService
                 return GetCrisisResponse();
 
             case ResponsePath.Reminder:
-                _pendingReminderText = CleanReminderText(userMessage);
+                _pendingReminderText = _intentService.CleanReminderText(userMessage);
                 return GetReminderResponse();
         }
-
-        
-        var reminderIntentDetected = LooksLikeReminderIntent(userMessage);
 
         var aiRequest = new ArloAiRequest
         {
             UserMessage = userMessage,
             EmotionalContext = emotionalContext,
-            RecentChat = ShouldIgnoreRecentChatFor(input: userMessage)
+            RecentChat = ShouldIgnoreRecentChatFor(userMessage)
                 ? new List<string>()
                 : _messages
                     .TakeLast(3)
                     .Select(m => $"{(m.IsFromUser ? "U" : "A")}: {m.Text}")
                     .ToList(),
-            OpenTasks = unfinishedTasks
-                .Take(3)
-                .Select(t => t.Title)
-                .ToList(),
+            OpenTasks = unfinishedTasks.Take(3).Select(t => t.Title).ToList(),
             RecentModes = _recentModes.ToList(),
-            ReminderIntentDetected = reminderIntentDetected
+            ReminderIntentDetected = _intentService.LooksLikeReminderIntent(userMessage)
         };
 
         var aiReply = await _arloAiClient.GetReplyAsync(aiRequest);
 
         if (!string.IsNullOrWhiteSpace(aiReply))
-        {
             return aiReply;
-        }
 
         var localIntentReply = BuildLocalIntentReply(userMessage);
 
         if (!string.IsNullOrWhiteSpace(localIntentReply))
-        {
             return localIntentReply;
-        }
 
         if (_responses.TryGetValue(state, out var stateResponses))
         {
@@ -323,9 +200,7 @@ public class ArloService : IArloService
             if (_lastResponseIndex.TryGetValue(state, out var lastIndex) && stateResponses.Count > 1)
             {
                 while (random == lastIndex)
-                {
                     random = Random.Shared.Next(stateResponses.Count);
-                }
             }
 
             _lastResponseIndex[state] = random;
@@ -346,9 +221,7 @@ public class ArloService : IArloService
     private string GetConversationRecallReply()
     {
         if (_conversationMemory.Count == 0)
-        {
             return "I don’t think you mentioned a specific task yet. Tell me what’s floating around and I’ll help you catch it.";
-        }
 
         var recentItems = _conversationMemory
             .OrderByDescending(m => m.CreatedUtc)
@@ -357,13 +230,87 @@ public class ArloService : IArloService
             .ToList();
 
         if (recentItems.Count == 1)
-        {
-            return $"Earlier you mentioned: {recentItems[0].Text}.";
-        }
+            return $"Earlier you mentioned: {MakeMemoryNatural(recentItems[0].Text)}.";
 
-        var lines = recentItems.Select((item, index) => $"{index + 1}. {MakeMemoryNatural(item.Text)}");
+        var lines = recentItems.Select((item, index) =>
+            $"{index + 1}. {MakeMemoryNatural(item.Text)}");
 
         return "Earlier you mentioned:\n\n" + string.Join("\n", lines);
+    }
+
+    private void TrySaveConversationMemory(string userMessage)
+    {
+        if (_intentService.LooksLikeRecallQuestion(userMessage))
+            return;
+
+        if (!LooksWorthRemembering(userMessage))
+            return;
+
+        var cleaned = _intentService.CleanMemoryText(userMessage);
+
+        if (string.IsNullOrWhiteSpace(cleaned))
+            return;
+
+        var alreadyExists = _conversationMemory.Any(m =>
+            string.Equals(m.Text.Trim(), cleaned.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        if (alreadyExists)
+            return;
+
+        _conversationMemory.Add(new ConversationMemoryItem
+        {
+            Text = cleaned,
+            Category = "task",
+            CreatedUtc = DateTime.UtcNow
+        });
+
+        while (_conversationMemory.Count > 10)
+            _conversationMemory.RemoveAt(0);
+    }
+
+    private static bool LooksWorthRemembering(string message)
+    {
+        var text = NormaliseIntentText(message);
+
+        return text.Contains("i need to")
+            || text.Contains("i also need to")
+            || text.Contains("i need to also")
+            || text.Contains("i still need to")
+            || text.Contains("i have to")
+            || text.Contains("i also have to")
+            || text.Contains("i have to also")
+            || text.Contains("i still have to")
+            || text.Contains("i must")
+            || text.Contains("i must also")
+            || text.Contains("ive got to")
+            || text.Contains("ive still got to")
+            || text.Contains("i still have got to")
+            || text.Contains("dont forget")
+            || text.Contains("remind me to")
+            || text.Contains("i have an appointment")
+            || text.Contains("ive got an appointment");
+    }
+
+    private ResponsePath DetermineResponsePath(string input)
+    {
+        if (LooksLikeCrisisIntent(input))
+            return ResponsePath.Crisis;
+
+        if (_intentService.LooksLikeReminderIntent(input))
+            return ResponsePath.Reminder;
+
+        return ResponsePath.AI;
+    }
+
+    private string BuildLocalIntentReply(string userMessage)
+    {
+        if (LooksLikeAWin(userMessage))
+            return "That counts. I’ve saved that as a win.";
+
+        if (_intentService.LooksLikeReminderIntent(userMessage))
+            return "That sounds worth remembering. I’ve got a reminder option ready for you below if that would help.";
+
+        return string.Empty;
     }
 
     private async Task TrySaveAutoWinAsync(string userMessage)
@@ -381,17 +328,12 @@ public class ArloService : IArloService
 
         if (_lastAutoWinUtc.HasValue &&
             now - _lastAutoWinUtc.Value < TimeSpan.FromMinutes(10))
-        {
             return;
-        }
 
         var recentWins = await _winService.GetRecentWinsAsync();
 
         var alreadyExists = recentWins.Any(w =>
-            string.Equals(
-                w.Text?.Trim(),
-                cleanedText,
-                StringComparison.OrdinalIgnoreCase));
+            string.Equals(w.Text?.Trim(), cleanedText, StringComparison.OrdinalIgnoreCase));
 
         if (alreadyExists)
         {
@@ -411,18 +353,96 @@ public class ArloService : IArloService
         Debug.WriteLine($"WIN SAVED: {win.Text}");
     }
 
+    private async Task TrySaveAutoCheckInAsync(string userMessage)
+    {
+        if (string.IsNullOrWhiteSpace(userMessage))
+            return;
+
+        var note = userMessage.Trim();
+        var now = DateTime.UtcNow;
+
+        if (_isSavingAutoCheckIn)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(_lastAutoCheckInMessage) &&
+            string.Equals(_lastAutoCheckInMessage, note, StringComparison.OrdinalIgnoreCase) &&
+            _lastAutoCheckInAttemptUtc.HasValue &&
+            now - _lastAutoCheckInAttemptUtc.Value < TimeSpan.FromSeconds(10))
+        {
+            Debug.WriteLine($"[Arlo] Auto check-in skipped duplicate message: {note}");
+            return;
+        }
+
+        _isSavingAutoCheckIn = true;
+        _lastAutoCheckInMessage = note;
+        _lastAutoCheckInAttemptUtc = now;
+
+        try
+        {
+            var detectedState = DetectState(NormaliseIntentText(note));
+
+            if (detectedState == "default")
+                detectedState = "general";
+
+            var checkIn = new CheckInEntry
+            {
+                Mood = detectedState,
+                Note = note,
+                TimestampUtc = now,
+                EnergyLevel = EstimateEnergyLevel(detectedState),
+                FocusLevel = EstimateFocusLevel(detectedState)
+            };
+
+            await _checkInService.SaveCheckInAsync(checkIn);
+
+            Debug.WriteLine($"[Arlo] Auto check-in saved: {checkIn.Mood}");
+        }
+        finally
+        {
+            _isSavingAutoCheckIn = false;
+        }
+    }
+
+    private static string NormaliseIntentText(string message)
+    {
+        return message
+            .ToLowerInvariant()
+            .Replace("'", "")
+            .Replace("’", "")
+            .Trim();
+    }
+
+    private static string MakeMemoryNatural(string text)
+    {
+        var result = text;
+
+        result = result.Replace(" my ", " your ", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" me ", " you ", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" myself", " yourself", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" my.", " your.", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" my,", " your,", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" my?", " your?", StringComparison.OrdinalIgnoreCase);
+        result = result.Replace(" my!", " your!", StringComparison.OrdinalIgnoreCase);
+
+        return result;
+    }
+
+    private static bool LooksLikeAWin(string message)
+    {
+        var text = NormaliseIntentText(message);
+        return WinPhrases.Any(phrase => text.Contains(phrase));
+    }
 
     private static string CleanWinText(string message)
     {
         var cleaned = message.Trim();
 
         if (cleaned.Length > 160)
-        {
             cleaned = cleaned[..160].TrimEnd() + "...";
-        }
 
         return cleaned;
     }
+
     private void TrackRecentMode(string mode)
     {
         if (string.IsNullOrWhiteSpace(mode) || mode == "default")
@@ -431,10 +451,9 @@ public class ArloService : IArloService
         _recentModes.Enqueue(mode);
 
         while (_recentModes.Count > 3)
-        {
             _recentModes.Dequeue();
-        }
     }
+
     private static string DetectState(string message)
     {
         if (message.Contains("overstimulated") ||
@@ -546,9 +565,7 @@ public class ArloService : IArloService
         return string.Empty;
     }
 
-    private static string GetDefaultReply(
-        string emotionalContext,
-        List<TaskItem> unfinishedTasks)
+    private static string GetDefaultReply(string emotionalContext, List<TaskItem> unfinishedTasks)
     {
         var response = "I’m here with you. We don’t need to fix everything right now. Tell me what feels like the hardest part.";
 
@@ -575,65 +592,11 @@ public class ArloService : IArloService
         var combined = string.Join(" ", parts);
 
         if (combined.Length > 420)
-        {
             combined = combined[..420].TrimEnd() + "...";
-        }
 
         return combined;
     }
-    private async Task TrySaveAutoCheckInAsync(string userMessage)
-    {
-        if (string.IsNullOrWhiteSpace(userMessage))
-            return;
 
-        var note = userMessage.Trim();
-        var now = DateTime.UtcNow;
-
-        if (_isSavingAutoCheckIn)
-            return;
-
-        if (!string.IsNullOrWhiteSpace(_lastAutoCheckInMessage) &&
-            string.Equals(_lastAutoCheckInMessage, note, StringComparison.OrdinalIgnoreCase) &&
-            _lastAutoCheckInAttemptUtc.HasValue &&
-            now - _lastAutoCheckInAttemptUtc.Value < TimeSpan.FromSeconds(10))
-        {
-            Debug.WriteLine($"[Arlo] Auto check-in skipped duplicate message: {note}");
-            return;
-        }
-
-        _isSavingAutoCheckIn = true;
-        _lastAutoCheckInMessage = note;
-        _lastAutoCheckInAttemptUtc = now;
-
-        try
-        {
-            var detectedState = DetectState(NormaliseIntentText(note));
-
-            if (detectedState == "default")
-                detectedState = "general";
-
-            Debug.WriteLine($"[Arlo] Auto check-in state: {detectedState} | note: {note}");
-
-            var checkIn = new CheckInEntry
-            {
-                Mood = detectedState,
-                Note = note,
-                TimestampUtc = now,
-                EnergyLevel = EstimateEnergyLevel(detectedState),
-                FocusLevel = EstimateFocusLevel(detectedState)
-            };
-
-            await _checkInService.SaveCheckInAsync(checkIn);
-
-            _lastAutoCheckInUtc = now;
-
-            Debug.WriteLine($"[Arlo] Auto check-in saved: {checkIn.Mood}");
-        }
-        finally
-        {
-            _isSavingAutoCheckIn = false;
-        }
-    }
     private static int EstimateEnergyLevel(string state)
     {
         return state switch
@@ -664,129 +627,6 @@ public class ArloService : IArloService
             "general" => 3,
             _ => 3
         };
-    }
-    private static bool LooksLikeAWin(string message)
-    {
-        var text = NormaliseIntentText(message);
-
-        return WinPhrases.Any(phrase => text.Contains(phrase));
-    }
-    private static bool LooksLikeReminderIntent(string message)
-    {
-        var text = NormaliseIntentText(message);
-
-        return ExplicitReminderPhrases.Any(phrase => text.Contains(phrase))
-            || AppointmentReminderPhrases.Any(phrase => text.Contains(phrase))
-            || TaskReminderPhrases.Any(phrase => text.Contains(phrase));
-    }
-
-    private static string CleanReminderText(string message)
-    {
-        var cleaned = message.Trim();
-
-        cleaned = cleaned
-            .Replace("I need to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I have to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I should", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I must", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Remind me to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Remember to", "", StringComparison.OrdinalIgnoreCase)
-            .Trim();
-
-        if (string.IsNullOrWhiteSpace(cleaned))
-            return message.Trim();
-
-        return char.ToUpper(cleaned[0]) + cleaned[1..];
-    }
-
-    private static string CleanMemoryText(string message)
-    {
-        var cleaned = message.Trim();
-
-        cleaned = cleaned
-            .Replace("I also need to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I need to also", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I still need to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I also have to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I have to also", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I still have to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I must also", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I've got to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Ive got to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I've still got to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Ive still got to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I need to remember to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I have to remember to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Can you remind me to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Please remind me to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Don't let me forget to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Dont let me forget to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Remind me to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Remember to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I need to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I have to", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I should", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("I must", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Hey Arlo", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Arlo", "", StringComparison.OrdinalIgnoreCase)
-            .Replace("Hello", "", StringComparison.OrdinalIgnoreCase)
-            .Trim();
-
-        if (string.IsNullOrWhiteSpace(cleaned))
-            return message.Trim();
-
-        return char.ToUpper(cleaned[0]) + cleaned[1..];
-    }
-    private static string BuildLocalIntentReply(string userMessage)
-    {
-        if (LooksLikeAWin(userMessage))
-        {
-            return "That counts. I’ve saved that as a win.";
-        }
-
-        if (LooksLikeReminderIntent(userMessage))
-        {
-            return "That sounds worth remembering. I’ve got a reminder option ready for you below if that would help.";
-        }
-
-        return string.Empty;
-    }
-    private static bool ShouldIgnoreRecentChatFor(string input)
-    {
-        var text = NormaliseIntentText(input);
-
-        return text is "im anxious"
-            or "i am anxious"
-            or "anxious"
-            or "im overwhelmed"
-            or "i am overwhelmed"
-            or "overwhelmed"
-            or "im stuck"
-            or "i am stuck"
-            or "stuck"
-            or "i cant start"
-            or "cant start"
-            or "i feel stuck"
-            or "i feel anxious"
-            or "i feel overwhelmed";
-    }
-    
-    private enum ResponsePath
-    {
-        AI,
-        Reminder,
-        Crisis
-    }
-
-    private ResponsePath DetermineResponsePath(string input)
-    {
-        if (LooksLikeCrisisIntent(input))
-            return ResponsePath.Crisis;
-
-        if (LooksLikeReminderIntent(input))
-            return ResponsePath.Reminder;
-
-        return ResponsePath.AI;
     }
 
     private static bool LooksLikeCrisisIntent(string input)
@@ -843,86 +683,10 @@ public class ArloService : IArloService
         """;
     }
 
-    private static bool LooksWorthRemembering(string message)
+    private enum ResponsePath
     {
-        var text = NormaliseIntentText(message);
-
-        return text.Contains("i need to")
-            || text.Contains("i also need to")
-            || text.Contains("i need to also")
-            || text.Contains("i still need to")
-
-            || text.Contains("i have to")
-            || text.Contains("i also have to")
-            || text.Contains("i have to also")
-            || text.Contains("i still have to")
-
-            || text.Contains("i must")
-            || text.Contains("i must also")
-
-            || text.Contains("ive got to")
-            || text.Contains("ive still got to")
-            || text.Contains("i still have got to")
-
-            || text.Contains("dont forget")
-            || text.Contains("remind me to")
-            || text.Contains("i have an appointment")
-            || text.Contains("ive got an appointment");
-    }
-
-    private void TrySaveConversationMemory(string userMessage)
-    {
-        if (!LooksWorthRemembering(userMessage))
-            return;
-
-        var cleaned = CleanMemoryText(userMessage);
-
-        if (string.IsNullOrWhiteSpace(cleaned))
-            return;
-
-        var alreadyExists = _conversationMemory.Any(m =>
-            string.Equals(
-                m.Text.Trim(),
-                cleaned.Trim(),
-                StringComparison.OrdinalIgnoreCase));
-
-        if (alreadyExists)
-            return;
-
-        _conversationMemory.Add(new ConversationMemoryItem
-        {
-            Text = cleaned,
-            Category = "task",
-            CreatedUtc = DateTime.UtcNow
-        });
-
-        while (_conversationMemory.Count > 10)
-        {
-            _conversationMemory.RemoveAt(0);
-        }
-    }
-    private static bool LooksLikeRecallQuestion(string message)
-    {
-        var text = NormaliseIntentText(message);
-
-        return text.Contains("what was i supposed to do")
-            || text.Contains("what did i need to do")
-            || text.Contains("what was the task")
-            || text.Contains("what did i say i needed to do")
-            || text.Contains("what was i meant to do")
-            || text.Contains("what did i mention")
-            || text.Contains("what did i say")
-            || text.Contains("what was i meant to remember")
-            || text.Contains("what have i got on")
-            || text.Contains("what have i got today")
-            || text.Contains("what have i got on today")
-            || text.Contains("what have i got tomorrow")
-            || text.Contains("what have i got on tomorrow")
-            || text.Contains("what do i have on")
-            || text.Contains("what do i have on today")
-            || text.Contains("what do i have on tomorrow")
-            || text.Contains("remind me what i have on")
-            || text.Contains("remind me what ive got on")
-            || text.Contains("remind me what i got on");
+        AI,
+        Reminder,
+        Crisis
     }
 }

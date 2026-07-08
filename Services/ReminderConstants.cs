@@ -14,4 +14,11 @@ public static class ReminderConstants
     {
         return Math.Abs(taskId.GetHashCode());
     }
+
+    public const int ReEngagementNotificationIdBase = 900000;
+
+    public static string GetReEngagementReminderKey(int days)
+    {
+        return $"arlo_reengagement_{days}_days";
+    }
 }

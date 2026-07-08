@@ -46,7 +46,9 @@ namespace ADHDCompanionApp
             builder.Services.AddSingleton<ISupportService, SupportService>();
             builder.Services.AddSingleton<IArloService, ArloService>();
             builder.Services.AddSingleton<IReminderEngine, ReminderEngine>();
-            
+            builder.Services.AddSingleton<IUserActivityService, UserActivityService>();
+            builder.Services.AddSingleton<IConversationIntentService, ConversationIntentService>();
+
 
             builder.Services.AddSingleton(new HttpClient
             {
@@ -74,9 +76,11 @@ namespace ADHDCompanionApp
             builder.Services.AddTransient<ProgressSummaryPopup>();
 
 
+
 #if ANDROID
             builder.Services.AddSingleton<IPlatformReminderScheduler, AndroidReminderScheduler>();
             builder.Services.AddSingleton<ISpeechToTextService, AndroidSpeechToTextService>();
+            
 #endif
 
 #if DEBUG

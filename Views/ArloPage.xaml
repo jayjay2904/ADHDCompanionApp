@@ -13,230 +13,222 @@
     </ContentPage.Resources>
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem
-            Text="Progress"
-            Order="Primary"
-            Priority="0"
-            Command="{Binding ShowProgressCommand}" />
-
-        <ToolbarItem
-            IconImageSource="gear.svg"
-            Order="Primary"
-            Priority="1"
-            Clicked="OnPreferencesClicked" />
+        <ToolbarItem Text="Progress" Order="Primary" Priority="0" Command="{Binding ShowProgressCommand}" />
+        <ToolbarItem IconImageSource="gear.svg" Order="Primary" Priority="1" Clicked="OnPreferencesClicked" />
     </ContentPage.ToolbarItems>
 
     <Grid>
 
-        <Grid RowDefinitions="Auto,*,Auto,Auto" Padding="20" RowSpacing="8">
+        <!-- WELCOME VIEW -->
+        <Grid
+            Padding="20"
+            RowDefinitions="Auto,*,Auto,*,Auto"
+            IsVisible="{Binding AreQuickPromptsVisible}">   
 
-            <!-- Header + First-Time Quick Prompts -->
+            <!-- Arlo + Greeting -->
             <VerticalStackLayout
                 Grid.Row="0"
-                Spacing="2"
-                IsVisible="{Binding AreQuickPromptsVisible}">
+                Spacing="0"
+                Margin="0,-15,0,0"
+                HorizontalOptions="Center"> 
 
-                <VerticalStackLayout
-                    Spacing="-8"
+                <Image
+                    x:Name="ArloMainImage"
+                    Source="arlo_main.png"
+                    HeightRequest="210"
+                    WidthRequest="210"
+                    Aspect="AspectFit"
                     HorizontalOptions="Center"
-                    VerticalOptions="Center">
+                    Margin="0,0,0,-45" />    
 
-                    <Image
-                        x:Name="ArloMainImage"
-                        Source="arlo_main.png"
-                        HeightRequest="140"
-                        WidthRequest="140"
-                        Aspect="AspectFit" />
+                <Label
+                    Text="{Binding GreetingTitle}"
+                    FontSize="36"
+                    FontAttributes="Bold"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" /> 
 
-                    <VerticalStackLayout Spacing="0" VerticalOptions="Start" Margin="0">
-
-                        <Label
-                            Text="{Binding GreetingText}"
-                            FontSize="26"
-                            FontAttributes="Bold"
-                            LineBreakMode="WordWrap"
-                            MaxLines="3"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-
-                        <Label
-                            Text="Pick what fits, or tell me what’s going on."
-                            FontSize="12"
-                            Opacity="0.8"
-                            TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
-
-                    </VerticalStackLayout>
-
-                </VerticalStackLayout>
-
-                <CollectionView
-                    ItemsSource="{Binding QuickPrompts}"
-                    SelectionMode="None"
-                    HeightRequest="200"
-                    Margin="0,8,0,20">
-
-                    <CollectionView.ItemsLayout>
-                        <GridItemsLayout
-                            Orientation="Vertical"
-                            Span="2"
-                            HorizontalItemSpacing="10"
-                            VerticalItemSpacing="10" />
-                    </CollectionView.ItemsLayout>
-
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Frame
-                                Padding="10,6"
-                                CornerRadius="20"
-                                HasShadow="False"
-                                HeightRequest="42"
-                                Margin="0,2"
-                                BackgroundColor="{Binding Text, Converter={StaticResource ArloPromptColourConverter}}">
-
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Tapped="OnQuickPromptTapped"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SendQuickPromptCommand}"
-                                        CommandParameter="{Binding Text}" />
-                                </Frame.GestureRecognizers>
-
-                                <HorizontalStackLayout
-                                    Spacing="4"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center">
-
-                                    <Image
-                                        Source="{Binding Icon}"
-                                        HeightRequest="22"
-                                        WidthRequest="22"
-                                        VerticalOptions="Center"
-                                        Margin="0,0,2,0" />
-
-                                    <Label
-                                        Text="{Binding Text}"
-                                        FontSize="14"
-                                        TextColor="#2E2E2E"
-                                        LineBreakMode="TailTruncation"
-                                        VerticalTextAlignment="Center" />
-
-                                </HorizontalStackLayout>
-
-                            </Frame>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-
-                </CollectionView>
+                <Label
+                    Text="{Binding GreetingSubtitle}"
+                    FontSize="22"
+                    HorizontalTextAlignment="Center"
+                    TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" /> 
 
             </VerticalStackLayout>
 
-            <!-- Conversation -->
-            <Frame
-                Grid.Row="1"
-                Style="{StaticResource CardFrameStyle}"
-                Padding="12"
-                VerticalOptions="FillAndExpand"
-                IsVisible="{Binding AreQuickPromptsVisible, Converter={StaticResource InverseBoolConverter}}">
+            <!-- Input -->
+            <Border
+                Grid.Row="2"
+                BackgroundColor="#FFFDF8"
+                Stroke="{StaticResource Primary}"
+                StrokeThickness="2"
+                Padding="10"
+                HorizontalOptions="Fill">   
 
-                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="30" />
+                </Border.StrokeShape>
 
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="10">
 
-                        <Label
-                            Grid.Column="0"
-                            Text="Conversation"
-                            FontSize="16"
-                            FontAttributes="Bold"
-                            VerticalOptions="Center"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                    <Editor
+                        Grid.Column="0"
+                        Placeholder="What’s on your mind?"
+                        Text="{Binding UserInput}"
+                        AutoSize="TextChanges"
+                        MinimumHeightRequest="66"
+                        MaximumHeightRequest="130"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                        PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                        VerticalOptions="Center"
+                        HorizontalOptions="Center"
+                        FontSize="18" />    
 
-                    </Grid>
+                    <BoxView
+                        Grid.Column="1"
+                        WidthRequest="1"
+                        HeightRequest="36"
+                        BackgroundColor="{StaticResource Primary}"
+                        Opacity="0.35"
+                        VerticalOptions="Center" /> 
 
-                    <ScrollView
-                        x:Name="MessagesScrollView"
-                        Grid.Row="1">
+                    <ImageButton
+                        Grid.Column="2"
+                        Source="mic.png"
+                        WidthRequest="36"
+                        HeightRequest="36"
+                        BackgroundColor="Transparent"
+                        Command="{Binding ListenCommand}"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        Padding="0" />  
 
-                        <VerticalStackLayout
-                            x:Name="MessagesStack"
-                            Spacing="12"
-                            BindableLayout.ItemsSource="{Binding Messages}">
-
-                            <BindableLayout.ItemTemplateSelector>
-                                <helpers:ChatMessageTemplateSelector>
-
-                                    <helpers:ChatMessageTemplateSelector.ArloTemplate>
-                                        <DataTemplate>
-                                            <Grid ColumnDefinitions="70,*" ColumnSpacing="2">
-
-                                                <Image
-                                                    Grid.Column="0"
-                                                    Source="arlo2.png"
-                                                    HeightRequest="70"
-                                                    WidthRequest="70"
-                                                    VerticalOptions="Start"
-                                                    Aspect="AspectFit" />
-
-                                                <Frame
-                                                    Grid.Column="1"
-                                                    Style="{StaticResource ArloBubbleStyle}"
-                                                    HorizontalOptions="FillAndExpand"
-                                                    Margin="-4,0,0,0">
-
-                                                    <Label
-                                                        Text="{Binding Text}"
-                                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
-                                                        FontSize="16"
-                                                        LineBreakMode="WordWrap"
-                                                        LineHeight="1.2" />
-
-                                                </Frame>
-
-                                            </Grid>
-                                        </DataTemplate>
-                                    </helpers:ChatMessageTemplateSelector.ArloTemplate>
-
-                                    <helpers:ChatMessageTemplateSelector.UserTemplate>
-                                        <DataTemplate>
-                                            <Grid ColumnDefinitions="2*,8*">
-
-                                                <Frame
-                                                    Grid.Column="1"
-                                                    Style="{StaticResource UserBubbleStyle}"
-                                                    HorizontalOptions="End">
-
-                                                    <Label
-                                                        Text="{Binding Text}"
-                                                        FontSize="16"
-                                                        TextColor="#2E2E2E"
-                                                        LineBreakMode="WordWrap"
-                                                        LineHeight="1.2" />
-
-                                                </Frame>
-
-                                            </Grid>
-                                        </DataTemplate>
-                                    </helpers:ChatMessageTemplateSelector.UserTemplate>
-
-                                </helpers:ChatMessageTemplateSelector>
-                            </BindableLayout.ItemTemplateSelector>
-
-                        </VerticalStackLayout>
-
-                    </ScrollView>
+                    <Button
+                        Grid.Column="3"
+                        Text="➜"
+                        WidthRequest="54"
+                        HeightRequest="54"
+                        CornerRadius="27"
+                        Padding="0"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="#F5F1E8"
+                        FontSize="26"
+                        FontAttributes="Bold"
+                        Command="{Binding SendMessageCommand}"
+                        Pressed="OnSendButtonPressed"
+                        Released="OnSendButtonReleased" />  
 
                 </Grid>
 
-            </Frame>
+            </Border>
+
+            <!-- Help prompt -->
+            <HorizontalStackLayout
+                Grid.Row="4"
+                HorizontalOptions="Center"
+                VerticalOptions="End"
+                Spacing="8"
+                Margin="0,0,0,2">  
+
+                <HorizontalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding ShowPromptsCommand}" />
+                </HorizontalStackLayout.GestureRecognizers>
+
+                <Label
+                    Text="💡"
+                    FontSize="24"
+                    VerticalTextAlignment="Center" />   
+
+                <Label
+                    Text="Not sure where to begin?"
+                    FontSize="18"
+                    TextColor="#7A4FA3"
+                    VerticalTextAlignment="Center" />   
+
+            </HorizontalStackLayout>
+
+        </Grid>
+        
+        <!-- CONVERSATION VIEW -->
+        <Grid
+            Padding="20"
+            RowDefinitions="*,Auto,Auto"
+            RowSpacing="10"
+            IsVisible="{Binding AreQuickPromptsVisible, Converter={StaticResource InverseBoolConverter}}">
+
+            <ScrollView x:Name="MessagesScrollView" Grid.Row="0">
+                <VerticalStackLayout
+                    x:Name="MessagesStack"
+                    Spacing="12"
+                    BindableLayout.ItemsSource="{Binding Messages}">
+
+                    <BindableLayout.ItemTemplateSelector>
+                        <helpers:ChatMessageTemplateSelector>
+
+                            <helpers:ChatMessageTemplateSelector.ArloTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="70,*" ColumnSpacing="2">
+                                        <Image
+                                            Grid.Column="0"
+                                            Source="arlo2.png"
+                                            HeightRequest="70"
+                                            WidthRequest="70"
+                                            VerticalOptions="Start"
+                                            Aspect="AspectFit" />
+
+                                        <Frame
+                                            Grid.Column="1"
+                                            Style="{StaticResource ArloBubbleStyle}"
+                                            HorizontalOptions="FillAndExpand"
+                                            Margin="-4,0,0,0">
+
+                                            <Label
+                                                Text="{Binding Text}"
+                                                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                                                FontSize="16"
+                                                LineBreakMode="WordWrap"
+                                                LineHeight="1.2" />
+                                        </Frame>
+                                    </Grid>
+                                </DataTemplate>
+                            </helpers:ChatMessageTemplateSelector.ArloTemplate>
+
+                            <helpers:ChatMessageTemplateSelector.UserTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="2*,8*">
+                                        <Frame
+                                            Grid.Column="1"
+                                            Style="{StaticResource UserBubbleStyle}"
+                                            HorizontalOptions="End">
+
+                                            <Label
+                                                Text="{Binding Text}"
+                                                FontSize="16"
+                                                TextColor="#2E2E2E"
+                                                LineBreakMode="WordWrap"
+                                                LineHeight="1.2" />
+                                        </Frame>
+                                    </Grid>
+                                </DataTemplate>
+                            </helpers:ChatMessageTemplateSelector.UserTemplate>
+
+                        </helpers:ChatMessageTemplateSelector>
+                    </BindableLayout.ItemTemplateSelector>
+
+                </VerticalStackLayout>
+            </ScrollView>
 
             <!-- Reminder Suggestion Card -->
             <Frame
-                Grid.Row="2"
+                Grid.Row="1"
                 IsVisible="{Binding IsReminderSuggestionVisible}"
                 BackgroundColor="{StaticResource Primary}"
                 CornerRadius="18"
                 Padding="12"
-                Margin="0,0,0,8">
+                Margin="0,0,0,4">
 
                 <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
-
                     <Label
                         Grid.Column="0"
                         Text="{Binding PendingReminderText, StringFormat='Would you like a reminder for: {0}?'}"
@@ -267,123 +259,94 @@
                         BackgroundColor="#F5F1E8"
                         TextColor="#2E2E2E"
                         Command="{Binding DismissReminderSuggestionCommand}" />
-
                 </Grid>
-
             </Frame>
 
-            <!-- Chat-style Input -->
-            <Grid Grid.Row="3">
+            <!-- Conversation Input -->
+            <Border
+                Grid.Row="2"
+                BackgroundColor="#FFFDF8"
+                Stroke="{StaticResource Primary}"
+                StrokeThickness="2"
+                Padding="8"
+                HorizontalOptions="Fill">
 
-                <!-- Soft shadow layer behind input -->
-                <BoxView
-                    x:Name="ChatInputShadow"
-                    Color="#9B6AD6"
-                    CornerRadius="28"
-                    Opacity="0.20"
-                    Margin="8,8,-2,-10"
-                    Scale="1.02" />
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="28" />
+                </Border.StrokeShape>
 
-                <Border
-                    x:Name="ChatInputFrame"
-                    BackgroundColor="#FFFDF8"
-                    Stroke="#D7BFEA"
-                    StrokeThickness="1"
-                    Padding="12"
-                    VerticalOptions="End">  
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
 
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="28"/>
-                    </Border.StrokeShape>
+                    <Button
+                        Grid.Column="0"
+                        Text="💡"
+                        WidthRequest="40"
+                        HeightRequest="40"
+                        CornerRadius="20"
+                        Padding="0"
+                        BackgroundColor="#F1E5FA"
+                        TextColor="#7A4FA3"
+                        FontSize="20"
+                        Command="{Binding ShowPromptsCommand}" />
 
-                    <Border.Shadow>
+                    <BoxView
+                        Grid.Column="1"
+                        WidthRequest="1"
+                        HeightRequest="30"
+                        BackgroundColor="{StaticResource Primary}"
+                        Opacity="0.5"
+                        VerticalOptions="Center" />
 
-                        <Shadow
-                            Brush="#30000000"
-                            Offset="0,10"
-                            Radius="28"
-                            Opacity="0.5"/> 
+                    <Editor
+                        Grid.Column="2"
+                        Placeholder="What’s on your mind?"
+                        Text="{Binding UserInput}"
+                        AutoSize="TextChanges"
+                        MinimumHeightRequest="58"
+                        MaximumHeightRequest="130"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
+                        PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                        VerticalOptions="Center"
+                        HorizontalOptions="FillAndExpand"
+                        FontSize="15" />
 
-                    </Border.Shadow>
+                    <BoxView
+                        Grid.Column="3"
+                        WidthRequest="1"
+                        HeightRequest="30"
+                        BackgroundColor="{StaticResource Primary}"
+                        Opacity="0.5"
+                        VerticalOptions="Center" />
 
-                    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
+                    <ImageButton
+                        Grid.Column="4"
+                        Source="mic.png"
+                        WidthRequest="30"
+                        HeightRequest="30"
+                        BackgroundColor="Transparent"
+                        Command="{Binding ListenCommand}"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center"
+                        Padding="0" />
 
-                        <Button
-                            Grid.Column="0"
-                            Text="💡"
-                            WidthRequest="44"
-                            HeightRequest="44"
-                            CornerRadius="22"
-                            Padding="0"
-                            BackgroundColor="#F1E5FA"
-                            TextColor="#7A4FA3"
-                            FontSize="24"
-                            Command="{Binding ShowPromptsCommand}"
-                            Pressed="OnPromptPlusPressed"
-                            Released="OnPromptPlusReleased" />
+                    <Button
+                        Grid.Column="5"
+                        Text="➜"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        CornerRadius="22"
+                        Padding="0"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="#F5F1E8"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        Command="{Binding SendMessageCommand}"
+                        Pressed="OnSendButtonPressed"
+                        Released="OnSendButtonReleased" />
 
-                        <BoxView
-                            Grid.Column="1"
-                            WidthRequest="1"
-                            HeightRequest="30"
-                            BackgroundColor="#D7BFEA"
-                            VerticalOptions="Center" />
-
-                        <Editor
-                            x:Name="UserInputEditor"
-                            Grid.Column="2"
-                            Focused="UserInputEditor_Focused"
-                            Placeholder="What’s on your mind?"
-                            Text="{Binding UserInput}"
-                            AutoSize="TextChanges"
-                            MinimumHeightRequest="58"
-                            MaximumHeightRequest="130"
-                            BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}"
-                            PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
-                            VerticalOptions="Center"
-                            HorizontalOptions="FillAndExpand"
-                            FontSize="14" />
-
-                        <BoxView
-                            Grid.Column="3"
-                            WidthRequest="1"
-                            HeightRequest="30"
-                            BackgroundColor="#D7BFEA"
-                            VerticalOptions="Center" />
-
-                        <ImageButton
-                            Grid.Column="4"
-                            Source="mic.png"
-                            WidthRequest="30"
-                            HeightRequest="30"
-                            BackgroundColor="Transparent"
-                            Command="{Binding ListenCommand}"
-                            Clicked="OnMicButtonClicked"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center"
-                            Padding="0" />
-
-                        <Button
-                            Grid.Column="5"
-                            Text="➜"
-                            WidthRequest="44"
-                            HeightRequest="44"
-                            CornerRadius="22"
-                            Padding="0"
-                            BackgroundColor="{StaticResource Primary}"
-                            TextColor="#F5F1E8"
-                            FontSize="22"
-                            FontAttributes="Bold"
-                            Command="{Binding SendMessageCommand}"
-                            Pressed="OnSendButtonPressed"
-                            Released="OnSendButtonReleased" />
-
-                    </Grid>
-
-                </Border>
-
-            </Grid>
+                </Grid>
+            </Border>
 
         </Grid>
 
@@ -401,46 +364,18 @@
                 Style="{StaticResource CardFrameStyle}">
 
                 <VerticalStackLayout Spacing="14">
+                    <Label Text="Set reminder" FontSize="20" FontAttributes="Bold" />
+                    <Label Text="{Binding PendingReminderText}" FontSize="14" Opacity="0.8" />
 
-                    <Label
-                        Text="Set reminder"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-
-                    <Label
-                        Text="{Binding PendingReminderText}"
-                        FontSize="14"
-                        Opacity="0.8"
-                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
-
-                    <DatePicker
-                        Date="{Binding ReminderDate}" />
-
-                    <TimePicker
-                        Time="{Binding ReminderTime}" />
+                    <DatePicker Date="{Binding ReminderDate}" />
+                    <TimePicker Time="{Binding ReminderTime}" />
 
                     <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-
-                        <Button
-                            Grid.Column="0"
-                            Text="Cancel"
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding CancelReminderSetupCommand}" />
-
-                        <Button
-                            Grid.Column="1"
-                            Text="Set"
-                            BackgroundColor="{StaticResource Primary}"
-                            TextColor="#2E2E2E"
-                            Command="{Binding SaveReminderCommand}" />
-
+                        <Button Grid.Column="0" Text="Cancel" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding CancelReminderSetupCommand}" />
+                        <Button Grid.Column="1" Text="Set" BackgroundColor="{StaticResource Primary}" TextColor="#2E2E2E" Command="{Binding SaveReminderCommand}" />
                     </Grid>
-
                 </VerticalStackLayout>
-
             </Frame>
-
         </Grid>
 
         <!-- Prompt Picker Overlay -->
@@ -458,29 +393,17 @@
 
                 <VerticalStackLayout Spacing="12">
 
-                    <Label
-                        Text="What fits now?"
-                        FontSize="18"
-                        FontAttributes="Bold"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
+                    <Label Text="What fits now?" FontSize="18" FontAttributes="Bold" />
 
                     <Label
-                        Text="Pick another option and I’ll keep going from there."
+                        Text="Pick an option and I’ll help you start from there."
                         FontSize="13"
-                        Opacity="0.8"
-                        TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
+                        Opacity="0.8" />
 
-                    <CollectionView
-                        ItemsSource="{Binding QuickPrompts}"
-                        SelectionMode="None"
-                        HeightRequest="200">
+                    <CollectionView ItemsSource="{Binding QuickPrompts}" SelectionMode="None" HeightRequest="200">
 
                         <CollectionView.ItemsLayout>
-                            <GridItemsLayout
-                                Orientation="Vertical"
-                                Span="2"
-                                HorizontalItemSpacing="8"
-                                VerticalItemSpacing="6" />
+                            <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="8" VerticalItemSpacing="6" />
                         </CollectionView.ItemsLayout>
 
                         <CollectionView.ItemTemplate>
@@ -499,17 +422,8 @@
                                             CommandParameter="{Binding Text}" />
                                     </Frame.GestureRecognizers>
 
-                                    <HorizontalStackLayout
-                                        Spacing="4"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center">
-
-                                        <Image
-                                            Source="{Binding Icon}"
-                                            HeightRequest="22"
-                                            WidthRequest="22"
-                                            VerticalOptions="Center"
-                                            Margin="0,0,2,0" />
+                                    <HorizontalStackLayout Spacing="4" HorizontalOptions="Center" VerticalOptions="Center">
+                                        <Image Source="{Binding Icon}" HeightRequest="22" WidthRequest="22" Margin="0,0,2,0" />
 
                                         <Label
                                             Text="{Binding Text}"
@@ -517,29 +431,17 @@
                                             TextColor="#2E2E2E"
                                             LineBreakMode="TailTruncation"
                                             VerticalTextAlignment="Center" />
-
                                     </HorizontalStackLayout>
-
                                 </Frame>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
-
                     </CollectionView>
 
-                    <Button
-                        Text="Cancel"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding HidePromptPickerCommand}" />
-
-                    <Button
-                        Text="Clear chat"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding ClearChatCommand}" />
+                    <Button Text="Cancel" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding HidePromptPickerCommand}" />
+                    <Button Text="Clear chat" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ClearChatCommand}" />
 
                 </VerticalStackLayout>
-
             </Frame>
-
         </Grid>
 
     </Grid>
