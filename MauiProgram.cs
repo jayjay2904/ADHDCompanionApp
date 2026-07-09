@@ -6,6 +6,8 @@ using ADHDCompanionApp.Views;
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 
+
+
 #if ANDROID
 using ADHDCompanionApp.Platforms.Android.Services;
 using Microsoft.Maui.Handlers;
@@ -48,8 +50,11 @@ namespace ADHDCompanionApp
             builder.Services.AddSingleton<IReminderEngine, ReminderEngine>();
             builder.Services.AddSingleton<IUserActivityService, UserActivityService>();
             builder.Services.AddSingleton<IConversationIntentService, ConversationIntentService>();
+            builder.Services.AddSingleton<IConversationIntentClassifier, ConversationIntentClassifier>();
+            builder.Services.AddSingleton<IMemoryInsightService, MemoryInsightService>();
 
 
+            builder.Services.AddSingleton<WinIntentDetector>();
             builder.Services.AddSingleton(new HttpClient
             {
                 BaseAddress = new Uri("https://adhdcompanionapp.onrender.com/"),
@@ -80,7 +85,8 @@ namespace ADHDCompanionApp
 #if ANDROID
             builder.Services.AddSingleton<IPlatformReminderScheduler, AndroidReminderScheduler>();
             builder.Services.AddSingleton<ISpeechToTextService, AndroidSpeechToTextService>();
-            
+            builder.Services.AddSingleton<INotificationPermissionService, NotificationPermissionService>();
+
 #endif
 
 #if DEBUG

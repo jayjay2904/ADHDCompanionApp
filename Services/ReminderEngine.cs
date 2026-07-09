@@ -347,6 +347,7 @@ public class ReminderEngine : IReminderEngine
         {
             ReminderKey = "debug_test_notification",
             NotificationId = notificationId,
+            Type = ReminderType.Custom,
             Title = title,
             Message = message,
             TriggerTime = DateTime.Now.Add(delay)

@@ -22,18 +22,14 @@ public class ProgressSummaryViewModel
 
     public async Task LoadAsync()
     {
-        var cutoffUtc = DateTime.UtcNow.AddHours(-48);
-
         RecentWins.Clear();
         RecentCheckIns.Clear();
 
         var recentWins = (await _winService.GetRecentWinsAsync())
-            .Where(w => w.TimestampUtc >= cutoffUtc)
             .Take(5)
             .ToList();
 
         var recentCheckIns = (await _checkInService.GetAllCheckInsAsync())
-            .Where(c => c.TimestampUtc >= cutoffUtc)
             .OrderByDescending(c => c.TimestampUtc)
             .Take(5)
             .ToList();

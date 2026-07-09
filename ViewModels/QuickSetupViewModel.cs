@@ -10,6 +10,7 @@ namespace ADHDCompanionApp.ViewModels;
 public partial class QuickSetupViewModel : BaseViewModel
 {
     private readonly IUserProfileService _profileService;
+    private readonly INotificationPermissionService _notificationPermissionService;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
@@ -19,9 +20,10 @@ public partial class QuickSetupViewModel : BaseViewModel
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
     private bool hasAcceptedDisclaimer;
 
-    public QuickSetupViewModel(IUserProfileService profileService)
+    public QuickSetupViewModel(IUserProfileService profileService, INotificationPermissionService notificationPermissionService)
     {
         _profileService = profileService;
+        _notificationPermissionService = notificationPermissionService;
         Title = "Quick Setup";
 
         LoadExistingProfile();
@@ -73,17 +75,20 @@ public partial class QuickSetupViewModel : BaseViewModel
             Preferences.Set("HasAcceptedDisclaimer", true);
             Preferences.Set("IsOnboardingComplete", true);
 
+            var notificationsAllowed =
+            await _notificationPermissionService.RequestNotificationPermissionAsync();
+
+            if (!notificationsAllowed)
+            {
+                await Shell.Current.DisplayAlert(
+                    "Gentle reminders",
+                    "No problem. You can turn reminders on later in Preferences.",
+                    "OK");
+            }
+
             if (Shell.Current is AppShell shell)
             {
                 await shell.UpdateNavigationForSetupStateAsync();
-            }
-
-            var hasSeenArloGuide = Preferences.Get("HasSeenArloGuide", false);
-
-            if (!hasSeenArloGuide)
-            {
-                await Shell.Current.GoToAsync(nameof(MeetArloPage));
-                return;
             }
 
             await Shell.Current.GoToAsync("//ArloPage");

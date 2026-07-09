@@ -100,9 +100,9 @@
                         Style="{StaticResource SecondaryButtonStyle}"
                         Command="{Binding ShowAboutArloCommand}" />
 
-                    <Button
+                    <!--<Button
                         Text="Schedule Test Notification"
-                        Clicked="OnScheduleTestNotificationClicked" />  
+                        Clicked="OnScheduleTestNotificationClicked" />   -->
 
                 </VerticalStackLayout>
             </Frame>

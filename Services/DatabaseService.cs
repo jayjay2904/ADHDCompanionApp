@@ -17,6 +17,8 @@ public class DatabaseService
         await _database.CreateTableAsync<TaskItem>();
         await _database.CreateTableAsync<WinEntry>();
         await _database.CreateTableAsync<CheckInEntry>();
+        await _database.CreateTableAsync<MemoryInsight>();
+        await _database.CreateTableAsync<WinEntry>();
     }
 
     public async Task<List<TaskItem>> GetTasksAsync()
@@ -110,5 +112,20 @@ public class DatabaseService
         return await _database!
             .Table<CheckInEntry>()
             .ToListAsync();
+    }
+    public async Task SaveMemoryInsightAsync(MemoryInsight insight)
+    {
+        if (insight is null)
+            return;
+
+        await InitAsync();
+
+        await _database.InsertOrReplaceAsync(insight);
+    }
+    public async Task<List<MemoryInsight>> GetMemoryInsightsAsync()
+    {
+        await InitAsync();
+
+        return await _database.Table<MemoryInsight>().ToListAsync();
     }
 }

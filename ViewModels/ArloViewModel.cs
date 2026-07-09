@@ -1,5 +1,7 @@
 using ADHDCompanionApp.Models;
 using ADHDCompanionApp.Models.Entities;
+using ADHDCompanionApp.Services;
+using ADHDCompanionApp.Services.Implementations;
 using ADHDCompanionApp.Services.Interfaces;
 using ADHDCompanionApp.Views;
 using CommunityToolkit.Maui.Extensions;
@@ -26,6 +28,10 @@ public partial class ArloViewModel : BaseViewModel
     private string? _pendingActionText;
     private bool _isProcessingMessage;
     private readonly IConversationIntentService _intentService;
+    private readonly WinIntentDetector _winIntentDetector;
+    private readonly IWinService _winService;
+    private readonly IConversationIntentClassifier _intentClassifier;
+    private readonly IMemoryInsightService _memoryInsightService;
 
     public event Action? ArloFinishedResponding;
 
@@ -82,7 +88,11 @@ public partial class ArloViewModel : BaseViewModel
         IServiceProvider serviceProvider,
         IReminderEngine reminderEngine,
         IUserActivityService userActivityService,
-        IConversationIntentService intentService)
+        IConversationIntentService intentService,
+        WinIntentDetector winIntentDetector,
+        IWinService winService,
+        IConversationIntentClassifier intentClassifier,
+        IMemoryInsightService memoryInsightService)
     {
         _arloService = arloService;
         _profileService = profileService;
@@ -92,6 +102,10 @@ public partial class ArloViewModel : BaseViewModel
         _reminderEngine = reminderEngine;
         _userActivityService = userActivityService;
         _intentService = intentService;
+        _winIntentDetector = winIntentDetector;
+        _winService = winService;
+        _intentClassifier = intentClassifier;
+        _memoryInsightService = memoryInsightService;
 
         Title = "Arlo";
 
@@ -392,6 +406,29 @@ public partial class ArloViewModel : BaseViewModel
 
             await _arloService.AddMessageAsync(userMessage);
 
+            var intent = _intentClassifier.Classify(trimmedInput);
+            var savedWin = false;
+
+            if (intent == ConversationIntent.Win)
+            {
+                await _winService.AddWinAsync(new WinEntry
+                {
+                    Text = trimmedInput,
+                    TimestampUtc = DateTime.UtcNow
+                });
+
+                await _memoryInsightService.AddInsightAsync(new MemoryInsight
+                {
+                    Text = $"Recent win: {trimmedInput}",
+                    SourceType = "Win",
+                    CreatedUtc = DateTime.UtcNow
+                });
+
+                savedWin = true;
+
+                System.Diagnostics.Debug.WriteLine($"[Arlo] Saved win and memory: {trimmedInput}");
+            }
+
             AreQuickPromptsVisible = false;
 
             await Task.Delay(400);
@@ -445,6 +482,11 @@ public partial class ArloViewModel : BaseViewModel
 
             var replyText = await _arloService.GetReplyAsync(trimmedInput);
 
+            if (savedWin)
+            {
+                replyText = $"I’ve saved that as a win.\n\n{replyText}";
+            }
+
             isWaiting = false;
             await animationTask;
 
@@ -458,8 +500,7 @@ public partial class ArloViewModel : BaseViewModel
 
             // Only offer a reminder if the user is creating a new reminder.
             // If they're asking Arlo to recall something, don't show the reminder suggestion.
-            if (_intentService.LooksLikeReminderIntent(trimmedInput) &&
-                !_intentService.LooksLikeRecallQuestion(trimmedInput))
+            if (intent == ConversationIntent.ReminderCreate)
             {
                 PendingReminderText = _intentService.CleanReminderText(trimmedInput);
                 _pendingActionText = PendingReminderText;
