@@ -69,7 +69,7 @@
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" BaseSize="128,128" />
 
 		<!-- Splash Screen -->
-		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1F2A44" BaseSize="768,768" />
+		<MauiSplashScreen Include="Resources\Splash\one_better_labs_splash.png" Color="#080B11" BaseSize="1600,1200" />
 
 		<!-- Images -->
 		<MauiImage Include="Resources\Images\*" />

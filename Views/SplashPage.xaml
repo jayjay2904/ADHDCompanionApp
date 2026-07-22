@@ -5,34 +5,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     Shell.NavBarIsVisible="False">
 
-    <Grid
-        Padding="30"
-        BackgroundColor="{AppThemeBinding Light={StaticResource BackgroundLight}, Dark={StaticResource BackgroundDark}}">
-
-        <VerticalStackLayout
-            VerticalOptions="Center"
-            HorizontalOptions="Center"
-            Spacing="20">
-
-            <Image
-                Source="splash.svg"
-                WidthRequest="1024"
-                HeightRequest="512"
-                Aspect="AspectFit" />
-
-            <Label
-                Text="Arlo"
-                FontSize="34"
-                FontAttributes="Bold"
-                HorizontalOptions="Center"
-                TextColor="{AppThemeBinding Light={StaticResource TextPrimaryLight}, Dark={StaticResource TextPrimaryDark}}" />
-
-            <Label
-                Text="Your calm place to land."
-                FontSize="16"
-                HorizontalTextAlignment="Center"
-                TextColor="{AppThemeBinding Light={StaticResource TextSecondaryLight}, Dark={StaticResource TextSecondaryDark}}" />
-
-        </VerticalStackLayout>
+    <Grid BackgroundColor="#080B11">
+        <Image
+            Source="one_better_labs_splash.png"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill"
+            Aspect="AspectFit" />
     </Grid>
 </ContentPage>
